@@ -12,6 +12,11 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+/**
+ * Class that performs a static code analysis of a fat jar.
+ * Generates all code execution paths to user inputted class/methods.
+ * Determines if generated execution paths are reachable by the main application of the jar.
+ */
 public class CodeReachabilityAnalyzer {
 
     private static final Map<String, List<String>> TARGET_CODE_MAP = Utilities.readCsvFromResources(Constants.CSV_FILE_NAME);
@@ -22,9 +27,14 @@ public class CodeReachabilityAnalyzer {
     private static final Map<String, Map<String, List<List<String>>>> reachableVulnerableCodeExecutionMap = new HashMap<>();
 
     /**
-     *
+     * Main execution:
+     * 1) Read fat jar contents and create code call graph
+     * 2) Modify user inputted class/method names to be more defined
+     * 3) Use call graph to create a tree of vulnerable code execution paths
+     * 4) Write all vulnerable execution paths to output file
+     * 5) Write reachable vulnerable execution paths to output file
      * @param args None
-     * @throws IOException
+     * @throws IOException N/A
      */
     public static void main(String[] args) throws IOException {
         File jarFile = new File(Constants.FAT_JAR_PATH);
@@ -37,9 +47,10 @@ public class CodeReachabilityAnalyzer {
     }
 
     /**
-     *
-     * @param jarFile
-     * @throws IOException
+     * Loops fat jar file contents to find all classes and sends
+     * the classes to the anaylzeClass method for further analysis.
+     * @param jarFile Fat jar containing source code and dependency source code
+     * @throws IOException N/A
      */
     private void analyzeJar(File jarFile) throws IOException {
         try (JarFile jar = new JarFile(jarFile)) {
@@ -58,10 +69,12 @@ public class CodeReachabilityAnalyzer {
     }
 
     /**
-     *
-     * @param jar
-     * @param entry
-     * @throws IOException
+     * Retrieve all methods from the class and adds them as keys to the callGraph.
+     * Additionally, retrieves all called methods, constructors, etc. from the classes methods
+     * and adds them as values to the callGraph.
+     * @param jar Fat jar containing source code and dependency source code
+     * @param entry Class file from jar
+     * @throws IOException N/A
      */
     private void analyzeClass(JarFile jar, JarEntry entry) throws IOException {
         try (InputStream inputStream = jar.getInputStream(entry)) {
@@ -87,8 +100,9 @@ public class CodeReachabilityAnalyzer {
     }
 
     /**
-     *
-     * @return
+     * Takes user inputted class/methods and retrieves matching
+     * class/methods from the allMethods data structure.  The retrieved
+     * class/methods are used for evaluation in place of the user inputted class/methods.
      */
     private void modifyVulnerableCodeSources() {
         for (Map.Entry<String, List<String>> targetMapEntry : modifiedTargetCodeMap.entrySet()) {
@@ -113,19 +127,21 @@ public class CodeReachabilityAnalyzer {
     }
 
     /**
-     *
-     * @param className
-     * @param methodName
-     * @return
+     * Searches allMethods data structure for class/methods that match
+     * the class/method parameters
+     * @param className Name of class being evaluated for execution paths
+     * @param methodName Name of method being evaluated for execution paths
+     * @return Matching class/methods
      */
     public static List<String> findMethodsByClassAndName(String className, String methodName) {
         return allMethods.stream().filter(method -> method.startsWith(className + ".") &&
-                            (methodName == null || methodName.isEmpty() ||
-                                method.contains("." + methodName + "("))).collect(Collectors.toList());
+                (methodName == null || methodName.isEmpty() ||
+                        method.contains("." + methodName + "("))).collect(Collectors.toList());
     }
 
     /**
-     *
+     * Creates code execution paths for the class/methods in the fat jar
+     * that match the user inputted class/methods
      */
     private void getVulnerableCodeExecutionPaths() {
         for (Map.Entry<String, List<String>> codeTargetMapEntry : modifiedTargetCodeMap.entrySet()) {
@@ -144,10 +160,12 @@ public class CodeReachabilityAnalyzer {
     }
 
     /**
-     *
-     * @param vulnerableCodeExecutionPaths
-     * @param vulnerableCode
-     * @param vulnerabilityId
+     * Determines if a code execution path is reachable by the main application.
+     * The logic is if a class/method in the execution path derives from the main application,
+     * then the execution path is reachable.
+     * @param vulnerableCodeExecutionPaths List of class/methods that are linked together to form a path of code execution
+     * @param vulnerableCode class/method that contains vulnerable code
+     * @param vulnerabilityId ID of the vulnerability that has a compromised class/method being evaluated
      */
     private void getReachableVulnerableCodeExecutionPaths(List<List<String>> vulnerableCodeExecutionPaths, TreeNode<String> vulnerableCode, String vulnerabilityId) {
         Map<String, List<List<String>>> reachableVulnerableCodeExecutionPathsMap = new HashMap<>();
@@ -171,9 +189,9 @@ public class CodeReachabilityAnalyzer {
     }
 
     /**
-     *
-     * @param codeExecutionMap
-     * @param filePath
+     * Writes vulnerable code execution paths to a text file
+     * @param codeExecutionMap Map that links Vulnerability Id, vulnerable code, and vulnerable code execution paths together
+     * @param filePath Directory of the generated text file
      */
     private void writeCodeExecutionPaths(Map<String, Map<String, List<List<String>>>> codeExecutionMap, String filePath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
@@ -207,7 +225,7 @@ public class CodeReachabilityAnalyzer {
     }
 
     /**
-     *
+     * Getter method for callGraph
      * @return callGraph
      */
     public static Map<String, Set<String>> getCallGraph() {

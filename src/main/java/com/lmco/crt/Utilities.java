@@ -8,6 +8,12 @@ import java.util.*;
 
 public class Utilities {
 
+    /**
+     * Reads contents of a csv file located in main/resources and writes
+     * contents to a map data structure.
+     * @param csvFilePath Directory of csv file
+     * @return Map data structured created from csv file contents
+     */
     public static Map<String, List<String>> readCsvFromResources(String csvFilePath) {
 
         String line;
