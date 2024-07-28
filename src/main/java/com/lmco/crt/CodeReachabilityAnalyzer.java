@@ -23,8 +23,8 @@ public class CodeReachabilityAnalyzer {
     private static final Map<String, Set<String>> callGraph = new HashMap<>();
     private static final Set<String> allMethods = new HashSet<>();
     private static final Map<String, List<String>> modifiedTargetCodeMap = new HashMap<>(TARGET_CODE_MAP);
-    private static final Map<String, Map<String, List<List<String>>>> vulnerableCodeExecutionMap = new HashMap<>();
-    private static final Map<String, Map<String, List<List<String>>>> reachableVulnerableCodeExecutionMap = new HashMap<>();
+    protected static final Map<String, Map<String, List<List<String>>>> vulnerableCodeExecutionMap = new HashMap<>();
+    protected static final Map<String, Map<String, List<List<String>>>> reachableVulnerableCodeExecutionMap = new HashMap<>();
 
     /**
      * Main execution:
@@ -37,9 +37,15 @@ public class CodeReachabilityAnalyzer {
      * @throws IOException N/A
      */
     public static void main(String[] args) throws IOException {
-        File jarFile = new File(Constants.FAT_JAR_PATH);
+        File serviceJar = new File(Constants.SERVICE_JAR_PATH);
+        File dependenciesJar = new File(Constants.CRT_DEPENDENCIES_JAR_PATH);
+        File testDependenciesJar = new File(Constants.CRT_TEST_DEPENDENCIES_JAR_PATH);
+        File classpathDependenciesJar = new File(Constants.CRT_CLASSPATH_DEPENDENCIES_JAR_PATH);
         CodeReachabilityAnalyzer analyzer = new CodeReachabilityAnalyzer();
-        analyzer.analyzeJar(jarFile);
+        analyzer.analyzeJar(serviceJar);
+        analyzer.analyzeJar(dependenciesJar);
+        analyzer.analyzeJar(testDependenciesJar);
+        analyzer.analyzeJar(classpathDependenciesJar);
         analyzer.modifyVulnerableCodeSources();
         analyzer.getVulnerableCodeExecutionPaths();
         analyzer.writeCodeExecutionPaths(vulnerableCodeExecutionMap, Constants.EXECUTION_PATHS_OUTPUT_DIR);
@@ -52,7 +58,7 @@ public class CodeReachabilityAnalyzer {
      * @param jarFile Fat jar containing source code and dependency source code
      * @throws IOException N/A
      */
-    private void analyzeJar(File jarFile) throws IOException {
+    protected void analyzeJar(File jarFile) throws IOException {
         try (JarFile jar = new JarFile(jarFile)) {
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
@@ -104,7 +110,7 @@ public class CodeReachabilityAnalyzer {
      * class/methods from the allMethods data structure.  The retrieved
      * class/methods are used for evaluation in place of the user inputted class/methods.
      */
-    private void modifyVulnerableCodeSources() {
+    protected void modifyVulnerableCodeSources() {
         for (Map.Entry<String, List<String>> targetMapEntry : modifiedTargetCodeMap.entrySet()) {
             List<String> updatedCodeTargets = new ArrayList<>();
             String vulnerabilityId = targetMapEntry.getKey();
@@ -143,7 +149,7 @@ public class CodeReachabilityAnalyzer {
      * Creates code execution paths for the class/methods in the fat jar
      * that match the user inputted class/methods
      */
-    private void getVulnerableCodeExecutionPaths() {
+    protected void getVulnerableCodeExecutionPaths() {
         for (Map.Entry<String, List<String>> codeTargetMapEntry : modifiedTargetCodeMap.entrySet()) {
             Map<String, List<List<String>>> vulnerableCodeExecutionPathsMap = new HashMap<>();
             String vulnerabilityId = codeTargetMapEntry.getKey();
@@ -193,7 +199,7 @@ public class CodeReachabilityAnalyzer {
      * @param codeExecutionMap Map that links Vulnerability Id, vulnerable code, and vulnerable code execution paths together
      * @param filePath Directory of the generated text file
      */
-    private void writeCodeExecutionPaths(Map<String, Map<String, List<List<String>>>> codeExecutionMap, String filePath) {
+    protected void writeCodeExecutionPaths(Map<String, Map<String, List<List<String>>>> codeExecutionMap, String filePath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Map.Entry<String, Map<String, List<List<String>>>> codeExecutionMapping : codeExecutionMap.entrySet()) {
                 String vulnerabilityId = codeExecutionMapping.getKey();

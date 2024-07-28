@@ -1,9 +1,18 @@
 Vulnerability ID: CVE-XXX-XXX4
   Vulnerable Code: com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
       Execution Path: 
+           ->io/swagger/codegen/v3/generators/java/JavaInflectorServerCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/SinatraServerCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
            ->com/lmco/crt/Main.main([Ljava/lang/String;)V
             ->com/lmco/crt/Main.mainTest()V
              ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/HaskellHttpClientCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
       Execution Path: 
            ->springfox/documentation/swagger2/web/Swagger2Controller.getDocumentation(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;)Lorg/springframework/http/ResponseEntity;
             ->springfox/documentation/spring/web/json/JsonSerializer.toJson(Ljava/lang/Object;)Lspringfox/documentation/spring/web/json/Json;
@@ -12,6 +21,21 @@ Vulnerability ID: CVE-XXX-XXX4
            ->org/cyclonedx/generators/xml/AbstractBomXmlGenerator.generateDocument(Lorg/cyclonedx/model/Bom;)Lorg/w3c/dom/Document;
             ->org/cyclonedx/generators/xml/AbstractBomXmlGenerator.toXML(Lorg/cyclonedx/model/Bom;Z)Ljava/lang/String;
              ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/JavaInflectorServerCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/FlaskConnexionCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/SwaggerYamlGenerator.processSwagger(Lio/swagger/models/Swagger;)V
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/AbstractGoCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/NodeJSServerCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
       Execution Path: 
            ->kafka/admin/ReassignPartitionsCommand.main([Ljava/lang/String;)V
             ->kafka/admin/ReassignPartitionsCommand$.main([Ljava/lang/String;)V
@@ -116,7 +140,22 @@ Vulnerability ID: CVE-XXX-XXX4
            ->org/cyclonedx/generators/json/AbstractBomJsonGenerator.toJson(Lorg/cyclonedx/model/Bom;Z)Ljava/lang/String;
             ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
       Execution Path: 
+           ->io/swagger/codegen/v3/generators/nodejs/NodeJSServerCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/RustServerCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/v3/generators/python/PythonFlaskConnexionCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
            ->org/springframework/kafka/support/converter/StringJsonMessageConverter.convertPayload(Lorg/springframework/messaging/Message;)Ljava/lang/Object;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/languages/Rails5ServerCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
+            ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
+      Execution Path: 
+           ->io/swagger/codegen/v3/generators/go/AbstractGoCodegen.postProcessSupportingFileData(Ljava/util/Map;)Ljava/util/Map;
             ->com/fasterxml/jackson/databind/ObjectMapper.writeValueAsString(Ljava/lang/Object;)Ljava/lang/String;
 Vulnerability ID: CVE-XXX-XXX3
   Vulnerable Code: com/fasterxml/jackson/databind/ext/DOMDeserializer.parse(Ljava/lang/String;)Lorg/w3c/dom/Document;
@@ -248,9 +287,24 @@ Vulnerability ID: CVE-XXX-XXX1
             ->com/fasterxml/jackson/databind/util/JSONPObject.serialize(Lcom/fasterxml/jackson/core/JsonGenerator;Lcom/fasterxml/jackson/databind/SerializerProvider;)V
              ->com/fasterxml/jackson/databind/SerializerProvider.findTypedValueSerializer(Ljava/lang/Class;ZLcom/fasterxml/jackson/databind/BeanProperty;)Lcom/fasterxml/jackson/databind/JsonSerializer;
       Execution Path: 
+           ->io/swagger/v3/core/jackson/ApiResponsesSerializer.serialize(Ljava/lang/Object;Lcom/fasterxml/jackson/core/JsonGenerator;Lcom/fasterxml/jackson/databind/SerializerProvider;)V
+            ->io/swagger/v3/core/jackson/ApiResponsesSerializer.serialize(Lio/swagger/v3/oas/models/responses/ApiResponses;Lcom/fasterxml/jackson/core/JsonGenerator;Lcom/fasterxml/jackson/databind/SerializerProvider;)V
+             ->com/fasterxml/jackson/databind/SerializerProvider.defaultSerializeValue(Ljava/lang/Object;Lcom/fasterxml/jackson/core/JsonGenerator;)V
+              ->com/fasterxml/jackson/databind/SerializerProvider.findTypedValueSerializer(Ljava/lang/Class;ZLcom/fasterxml/jackson/databind/BeanProperty;)Lcom/fasterxml/jackson/databind/JsonSerializer;
+      Execution Path: 
+           ->io/swagger/v3/core/jackson/PathsSerializer.serialize(Ljava/lang/Object;Lcom/fasterxml/jackson/core/JsonGenerator;Lcom/fasterxml/jackson/databind/SerializerProvider;)V
+            ->io/swagger/v3/core/jackson/PathsSerializer.serialize(Lio/swagger/v3/oas/models/Paths;Lcom/fasterxml/jackson/core/JsonGenerator;Lcom/fasterxml/jackson/databind/SerializerProvider;)V
+             ->com/fasterxml/jackson/databind/SerializerProvider.defaultSerializeValue(Ljava/lang/Object;Lcom/fasterxml/jackson/core/JsonGenerator;)V
+              ->com/fasterxml/jackson/databind/SerializerProvider.findTypedValueSerializer(Ljava/lang/Class;ZLcom/fasterxml/jackson/databind/BeanProperty;)Lcom/fasterxml/jackson/databind/JsonSerializer;
+      Execution Path: 
            ->com/fasterxml/jackson/databind/node/POJONode.serialize(Lcom/fasterxml/jackson/core/JsonGenerator;Lcom/fasterxml/jackson/databind/SerializerProvider;)V
             ->com/fasterxml/jackson/databind/SerializerProvider.defaultSerializeValue(Ljava/lang/Object;Lcom/fasterxml/jackson/core/JsonGenerator;)V
              ->com/fasterxml/jackson/databind/SerializerProvider.findTypedValueSerializer(Ljava/lang/Class;ZLcom/fasterxml/jackson/databind/BeanProperty;)Lcom/fasterxml/jackson/databind/JsonSerializer;
+      Execution Path: 
+           ->io/swagger/v3/core/jackson/CallbackSerializer.serialize(Ljava/lang/Object;Lcom/fasterxml/jackson/core/JsonGenerator;Lcom/fasterxml/jackson/databind/SerializerProvider;)V
+            ->io/swagger/v3/core/jackson/CallbackSerializer.serialize(Lio/swagger/v3/oas/models/callbacks/Callback;Lcom/fasterxml/jackson/core/JsonGenerator;Lcom/fasterxml/jackson/databind/SerializerProvider;)V
+             ->com/fasterxml/jackson/databind/SerializerProvider.defaultSerializeValue(Ljava/lang/Object;Lcom/fasterxml/jackson/core/JsonGenerator;)V
+              ->com/fasterxml/jackson/databind/SerializerProvider.findTypedValueSerializer(Ljava/lang/Class;ZLcom/fasterxml/jackson/databind/BeanProperty;)Lcom/fasterxml/jackson/databind/JsonSerializer;
       Execution Path: 
            ->com/fasterxml/jackson/datatype/jdk8/StreamSerializer.lambda$serialize$0(Lcom/fasterxml/jackson/databind/SerializerProvider;Lcom/fasterxml/jackson/core/JsonGenerator;Ljava/lang/Object;)V
             ->com/fasterxml/jackson/databind/SerializerProvider.defaultSerializeValue(Ljava/lang/Object;Lcom/fasterxml/jackson/core/JsonGenerator;)V

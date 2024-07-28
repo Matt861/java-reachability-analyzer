@@ -7,18 +7,20 @@ version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
     implementation 'org.ow2.asm:asm:7.2'
     implementation 'org.ow2.asm:asm-tree:7.2'
     implementation 'org.apache.commons:commons-compress:1.19'
-    testImplementation platform('org.junit:junit-bom:5.9.1')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.lmco.crt:crt-test-dependencies:0.4.0'
+//    testImplementation platform('org.junit:junit-bom:5.9.1')
+//    testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 test {
-    useJUnitPlatform()
+    useJUnit()
 }
 
 // Add the below task to the build.gradle of the source code you want to analyze to create a fat jar.
