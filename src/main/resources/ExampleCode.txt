@@ -1,0 +1,66 @@
+####### Generate jar of all dependencies for a pom.xml file #######
+
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>3.3.0</version>
+            <configuration>
+                <descriptorRefs>
+                    <descriptorRef>jar-with-dependencies</descriptorRef>
+                </descriptorRefs>
+                <fileSets>
+                    <fileSet>
+                        <directory>${project.build.directory}/classes</directory>
+                        <outputDirectory>/</outputDirectory>
+                        <includes>
+                            <include>**/*</include>
+                        </includes>
+                        <excludes>
+                            <exclude>META-INF/*.SF</exclude>
+                            <exclude>META-INF/*.DSA</exclude>
+                            <exclude>META-INF/*.RSA</exclude>
+                            <!-- Add more exclusions as needed -->
+                        </excludes>
+                    </fileSet>
+                </fileSets>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>make-assembly</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>single</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+
+
+####### Generate jar of java application w/o dependencies included in build.gradle #######
+
+jar {
+    from {
+        sourceSets.main.output
+    }
+    archiveBaseName.set('crt-service')
+    archiveVersion.set('3.0-SNAPSHOT')
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+
+####### SourceSets in build.gradle #######
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+}
