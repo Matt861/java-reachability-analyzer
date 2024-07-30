@@ -1,10 +1,7 @@
 package com.lmco.crt;
 
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
 import java.io.*;
 import java.util.*;
@@ -50,6 +47,57 @@ public class CodeReachabilityAnalyzer {
         analyzer.getVulnerableCodeExecutionPaths();
         analyzer.writeCodeExecutionPaths(vulnerableCodeExecutionMap, Constants.EXECUTION_PATHS_OUTPUT_DIR);
         analyzer.writeCodeExecutionPaths(reachableVulnerableCodeExecutionMap, Constants.REACHABLE_PATHS_OUTPUT_DIR);
+    }
+
+    private void handleAnnotations(ClassNode classNode) {
+        if (classNode.visibleAnnotations != null) {
+            for (AnnotationNode annotation : classNode.visibleAnnotations) {
+                if (annotation.desc.contains("org/springframework/boot/autoconfigure/SpringBootApplication")) {
+                    // Simulate the behavior of @SpringBootApplication
+                    simulateSpringBootApplicationBehavior(classNode.name);
+                }
+                if (annotation.desc.contains("org/springframework/stereotype/Component")) {
+                    // Handle @Component annotation
+                    handleComponentAnnotation(classNode);
+                }
+            }
+        }
+
+        // Check for @Bean annotations on methods
+        for (MethodNode method : classNode.methods) {
+            if (method.visibleAnnotations != null) {
+                for (AnnotationNode annotation : method.visibleAnnotations) {
+                    if (annotation.desc.contains("org/springframework/context/annotation/Bean")) {
+                        // Handle @Bean annotation
+                        handleBeanAnnotation(classNode, method);
+                    }
+                }
+            }
+        }
+    }
+
+    private void handleComponentAnnotation(ClassNode classNode) {
+        // Simulate component scanning and initialization
+        String className = classNode.name;
+        // Assuming @Component classes have a default constructor
+        String constructorMethod = className + ".<init>()V";
+        callGraph.computeIfAbsent("org/springframework/context/annotation/ClassPathBeanDefinitionScanner.scan", k -> new HashSet<>())
+                .add(constructorMethod);
+    }
+
+    private void handleBeanAnnotation(ClassNode classNode, MethodNode method) {
+        // Simulate bean initialization
+        String methodName = classNode.name + "." + method.name + method.desc;
+        callGraph.computeIfAbsent("org/springframework/context/annotation/ConfigurationClassBeanDefinitionReader.loadBeanDefinitionsForBeanMethod", k -> new HashSet<>())
+                .add(methodName);
+    }
+
+    private void simulateSpringBootApplicationBehavior(String className) {
+        // Simulate SpringApplication.run
+        String springApplicationRunMethod = "org/springframework/boot/SpringApplication.run";
+        String runSignature = "(Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;";
+        callGraph.computeIfAbsent(className + ".<init>()V", k -> new HashSet<>())
+                .add(springApplicationRunMethod + runSignature);
     }
 
     /**
@@ -102,6 +150,9 @@ public class CodeReachabilityAnalyzer {
                 }
                 callGraph.put(methodName, calledMethods);
             }
+
+            // Handle specific annotations
+            handleAnnotations(classNode);
         }
     }
 
