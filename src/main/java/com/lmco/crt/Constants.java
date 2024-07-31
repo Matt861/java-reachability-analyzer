@@ -6,7 +6,7 @@ public final class Constants {
         // No instantiation
     }
 
-    public static final String CSV_FILE_NAME = "src\\main\\resources\\VulnerableCode.csv";
+    public static final String CSV_FILE_NAME = "src\\main\\resources\\crt-maven-test-dependencies-vulnerable-code.csv";
     public static final String APPLICATION_GROUP = "com/lmco/crt";
     public static final String EXECUTION_PATHS_OUTPUT_DIR = "output\\VulnerableCodeExecutionPaths.txt";
     public static final String REACHABLE_PATHS_OUTPUT_DIR = "output\\ReachableCodeExecutionPaths.txt";

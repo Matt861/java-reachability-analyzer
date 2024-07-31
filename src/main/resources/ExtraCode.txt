@@ -1,0 +1,319 @@
+//    private void handleAnnotations(ClassNode classNode) {
+//        if (classNode.visibleAnnotations != null) {
+//            for (AnnotationNode annotation : classNode.visibleAnnotations) {
+//                if (annotation.desc.contains("org/springframework/boot/autoconfigure/SpringBootApplication")) {
+//                    // Simulate the behavior of @SpringBootApplication
+//                    simulateSpringBootApplicationBehavior(classNode.name);
+//                }
+//                if (annotation.desc.contains("org/springframework/stereotype/Component")) {
+//                    // Handle @Component annotation
+//                    handleComponentAnnotation(classNode);
+//                }
+//            }
+//        }
+//
+//        // Check for @Bean annotations on methods
+//        for (MethodNode method : classNode.methods) {
+//            if (method.visibleAnnotations != null) {
+//                for (AnnotationNode annotation : method.visibleAnnotations) {
+//                    if (annotation.desc.contains("org/springframework/context/annotation/Bean")) {
+//                        // Handle @Bean annotation
+//                        handleBeanAnnotation(classNode, method);
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    private void handleComponentAnnotation(ClassNode classNode) {
+//        // Simulate component scanning and initialization
+//        String className = classNode.name;
+//        // Assuming @Component classes have a default constructor
+//        String constructorMethod = className + ".<init>()V";
+//        callGraph.computeIfAbsent("org/springframework/context/annotation/ClassPathBeanDefinitionScanner.scan", k -> new HashSet<>())
+//                .add(constructorMethod);
+//    }
+//
+//    private void handleBeanAnnotation(ClassNode classNode, MethodNode method) {
+//        // Simulate bean initialization
+//        String methodName = classNode.name + "." + method.name + method.desc;
+//        callGraph.computeIfAbsent("org/springframework/context/annotation/ConfigurationClassBeanDefinitionReader.loadBeanDefinitionsForBeanMethod", k -> new HashSet<>())
+//                .add(methodName);
+//    }
+//
+//    private void simulateSpringBootApplicationBehavior(String className) {
+//        // Simulate SpringApplication.run
+//        String springApplicationRunMethod = "org/springframework/boot/SpringApplication.run";
+//        String runSignature = "(Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;";
+//        callGraph.computeIfAbsent(className + ".<init>()V", k -> new HashSet<>())
+//                .add(springApplicationRunMethod + runSignature);
+//    }
+
+    public static void createVulnerableCodeExecutionTree(TreeNode<String> vulnerableCode, int depth) {
+        //Map<String, Set<String>> callGraph = CodeReachabilityAnalyzer.getCallGraph();
+        //System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+        if (depth > 50) {
+            System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+        }
+        for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+            String callingCode = entry.getKey();
+            if (entry.getValue().contains(vulnerableCode.data)) {
+                // This is actually the parent because it is code that calls the vulnerable code.
+                // However, the tree will be reversed later so that the execution order is correct.
+                if (!vulnerableCode.children.contains(callingCode)) {
+                    TreeNode<String> child = vulnerableCode.addChild(callingCode);
+                    createVulnerableCodeExecutionTree(child, depth + 1);
+                }
+                else {
+                    System.out.println("Tree children already contain callingCode");
+                }
+            }
+        }
+    }
+
+        public static void createVulnerableCodeExecutionTree2(TreeNode<String> vulnerableCode, int depth) {
+            //System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+    //        if (depth > 50) {
+    //            System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+    //        }
+    //
+    //        if (vulnerableCode.data.contains("ReassignPartitionsCommand$.main")) {
+    //            System.out.println("Breakpoint");
+    //        }
+
+            if (memoizedTrees.containsKey(vulnerableCode.data)) {
+                vulnerableCode.children.add(memoizedTrees.get(vulnerableCode.data));
+
+                return;
+            }
+
+    //        if (memoizedTrees.containsKey(vulnerableCode.data)) {
+    //
+    //            return;
+    //        }
+
+            if (visitedNodes.contains(vulnerableCode.data)) {
+                return;
+            }
+
+            visitedNodes.add(vulnerableCode.data);
+
+    //        // Check for memoized results
+    //        if (memoizedTrees.containsKey(vulnerableCode.data)) {
+    //            TreeNode<String> memoizedSubtree = memoizedTrees.get(vulnerableCode.data);
+    //            for (TreeNode<String> child : memoizedSubtree.children) {
+    //                if (!vulnerableCode.containsChild(child.data)) {
+    //                    vulnerableCode.addChild(child.data);
+    //                }
+    //            }
+    //            return;
+    //        }
+
+            for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+                String callingCode = entry.getKey();
+                if (entry.getValue().contains(vulnerableCode.data)) {
+                    if (!vulnerableCode.children.contains(callingCode)) {
+                        if (vulnerableCode.data != callingCode) {
+                            TreeNode<String> child = vulnerableCode.addChild(callingCode);
+                            createVulnerableCodeExecutionTree2(child, depth + 1);
+                        }
+                    } else {
+                        System.out.println("Tree children already contain callingCode");
+                    }
+                }
+            }
+
+            memoizedTrees.put(vulnerableCode.data, vulnerableCode);
+        }
+
+        public static void createVulnerableCodeExecutionTree3(TreeNode<String> vulnerableCode, int depth) {
+            //System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+    //        if (depth > 50) {
+    //            System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+    //        }
+
+            // Avoid infinite loops by checking visited nodes first
+            if (visitedNodes.contains(vulnerableCode.data)) {
+                return;
+            }
+
+            visitedNodes.add(vulnerableCode.data);
+
+            // Check for memoized results
+            if (memoizedTrees.containsKey(vulnerableCode.data)) {
+                TreeNode<String> memoizedSubtree = memoizedTrees.get(vulnerableCode.data);
+                for (TreeNode<String> child : memoizedSubtree.children) {
+                    vulnerableCode.addChild(child.data);
+                }
+                return;
+            }
+
+            for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+                String callingCode = entry.getKey();
+                if (entry.getValue().contains(vulnerableCode.data)) {
+                    if (!vulnerableCode.children.contains(callingCode)) {
+                        TreeNode<String> child = vulnerableCode.addChild(callingCode);
+                        createVulnerableCodeExecutionTree3(child, depth + 1);
+                    } else {
+                        System.out.println("Tree children already contain callingCode");
+                    }
+                }
+            }
+
+            // Memoize the result for the current vulnerableCode node
+            memoizedTrees.put(vulnerableCode.data, cloneTree(vulnerableCode));
+        }
+
+        public static void createVulnerableCodeExecutionTree5(TreeNode<String> vulnerableCode, int depth) {
+            //System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+
+            // Avoid infinite loops by checking visited nodes first
+            if (visitedNodes.contains(vulnerableCode.data)) {
+                return;
+            }
+
+            visitedNodes.add(vulnerableCode.data);
+
+            // Check for memoized results
+            if (memoizedTrees.containsKey(vulnerableCode.data)) {
+                TreeNode<String> memoizedSubtree = memoizedTrees.get(vulnerableCode.data);
+                for (TreeNode<String> child : memoizedSubtree.children) {
+                    if (!vulnerableCode.containsChild(child.data)) {
+                        vulnerableCode.addChild(child.data);
+                    }
+                }
+                return;
+            }
+
+            for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+                String callingCode = entry.getKey();
+                if (entry.getValue().contains(vulnerableCode.data)) {
+                    if (!vulnerableCode.containsChild(callingCode)) {
+                        TreeNode<String> child = vulnerableCode.addChild(callingCode);
+                        createVulnerableCodeExecutionTree5(child, depth + 1);
+                    } else {
+                        System.out.println("Tree children already contain callingCode");
+                    }
+                }
+            }
+
+            // Memoize the result for the current vulnerableCode node
+            memoizedTrees.put(vulnerableCode.data, cloneTree(vulnerableCode));
+        }
+
+        public static void createVulnerableCodeExecutionTree6(TreeNode<String> vulnerableCode, int depth) {
+            //System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+
+            // Avoid infinite loops by checking visited nodes first
+            if (visitedNodes.contains(vulnerableCode.data)) {
+                return;
+            }
+
+            visitedNodes.add(vulnerableCode.data);
+
+            // Check for memoized results
+            if (memoizedTrees.containsKey(vulnerableCode.data)) {
+                TreeNode<String> memoizedSubtree = memoizedTrees.get(vulnerableCode.data);
+                for (TreeNode<String> child : memoizedSubtree.children) {
+                    if (!vulnerableCode.containsChild(child.data)) {
+                        vulnerableCode.addChild(child.data);
+                    }
+                }
+                return;
+            }
+
+            for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+                String callingCode = entry.getKey();
+                if (entry.getValue().contains(vulnerableCode.data)) {
+                    if (!vulnerableCode.containsChild(callingCode)) {
+                        TreeNode<String> child = vulnerableCode.addChild(callingCode);
+                        createVulnerableCodeExecutionTree6(child, depth + 1);
+                    } else {
+                        System.out.println("Tree children already contain callingCode");
+                    }
+                }
+            }
+
+            // Memoize the result for the current vulnerableCode node
+            memoizedTrees.put(vulnerableCode.data, cloneTree(vulnerableCode));
+        }
+
+        public static void createVulnerableCodeExecutionTree7(TreeNode<String> vulnerableCode, int depth) {
+            //System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+
+            if (memoizedTrees.containsKey(vulnerableCode.data)) {
+                TreeNode<String> memoizedSubtree = memoizedTrees.get(vulnerableCode.data);
+                vulnerableCode.children.addAll(cloneChildren(memoizedSubtree.children));
+                return;
+            }
+
+            if (visitedNodes.contains(vulnerableCode.data)) {
+                return;
+            }
+
+            visitedNodes.add(vulnerableCode.data);
+
+            for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+                String callingCode = entry.getKey();
+                if (entry.getValue().contains(vulnerableCode.data)) {
+                    TreeNode<String> child = vulnerableCode.addChild(callingCode);
+                    createVulnerableCodeExecutionTree7(child, depth + 1);
+                }
+            }
+
+            memoizedTrees.put(vulnerableCode.data, cloneTree(vulnerableCode));
+        }
+
+    public static void createVulnerableCodeExecutionTree8(TreeNode<String> vulnerableCode, int depth) {
+        System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+
+        if (memoizedTrees.containsKey(vulnerableCode.data)) {
+            vulnerableCode.children.add(memoizedTrees.get(vulnerableCode.data));
+            return;
+        }
+
+        if (visitedNodes.contains(vulnerableCode.data)) {
+            return;
+        }
+
+        visitedNodes.add(vulnerableCode.data);
+
+        for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+            String callingCode = entry.getKey();
+            if (entry.getValue().contains(vulnerableCode.data)) {
+                if (!vulnerableCode.children.contains(callingCode)) {
+                    TreeNode<String> child = vulnerableCode.addChild(callingCode);
+                    createVulnerableCodeExecutionTree(child, depth + 1);
+                } else {
+                    System.out.println("Tree children already contain callingCode");
+                }
+            }
+        }
+
+        memoizedTrees.put(vulnerableCode.data, vulnerableCode);
+    }
+
+
+    private static List<TreeNode<String>> cloneChildren(List<TreeNode<String>> children) {
+        List<TreeNode<String>> clonedChildren = new ArrayList<>();
+        for (TreeNode<String> child : children) {
+            clonedChildren.add(cloneTree(child));
+        }
+        return clonedChildren;
+    }
+
+
+    public void printTree(TreeNode<String> node, String prefix, boolean isLast) {
+        if (node != null) {
+            System.out.println(prefix + (isLast ? "\\-- " : "|-- ") + node.data);
+            for (int i = 0; i < node.children.size(); i++) {
+                printTree(node.children.get(i), prefix + (isLast ? "    " : "|   "), i == node.children.size() - 1);
+            }
+        }
+    }
+
+    //    public static List<String> findMethodsByClassAndName(String className, String methodName) {
+    //        return allMethods.stream().filter(method -> method.startsWith(className + ".") &&
+    //                (methodName == null || methodName.isEmpty() ||
+    //                        method.contains("." + methodName + "("))).collect(Collectors.toList());
+    //    }

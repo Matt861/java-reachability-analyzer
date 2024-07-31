@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Class that performs a static code analysis of a fat jar.
@@ -18,7 +20,7 @@ public class CodeReachabilityAnalyzer {
 
     private static final Map<String, List<String>> TARGET_CODE_MAP = Utilities.readCsvFromResources(Constants.CSV_FILE_NAME);
     private static final Map<String, Set<String>> callGraph = new HashMap<>();
-    private static final Set<String> allMethods = new HashSet<>();
+    //private static final Set<String> allMethods = new HashSet<>();
     private static final Map<String, List<String>> modifiedTargetCodeMap = new HashMap<>(TARGET_CODE_MAP);
     protected static final Map<String, Map<String, List<List<String>>>> vulnerableCodeExecutionMap = new HashMap<>();
     protected static final Map<String, Map<String, List<List<String>>>> reachableVulnerableCodeExecutionMap = new HashMap<>();
@@ -41,63 +43,15 @@ public class CodeReachabilityAnalyzer {
         CodeReachabilityAnalyzer analyzer = new CodeReachabilityAnalyzer();
         analyzer.analyzeJar(serviceJar);
         analyzer.analyzeJar(dependenciesJar);
-        analyzer.analyzeJar(testDependenciesJar);
         analyzer.analyzeJar(classpathDependenciesJar);
+        analyzer.analyzeJar(testDependenciesJar);
+        //analyzer.readCallGraphFromGzipFile("input\\CallGraph.csv.gz");
+        //analyzer.writeCallGraphToGzipFile("input\\CallGraph.csv.gz");
         analyzer.modifyVulnerableCodeSources();
         analyzer.getVulnerableCodeExecutionPaths();
         analyzer.writeCodeExecutionPaths(vulnerableCodeExecutionMap, Constants.EXECUTION_PATHS_OUTPUT_DIR);
         analyzer.writeCodeExecutionPaths(reachableVulnerableCodeExecutionMap, Constants.REACHABLE_PATHS_OUTPUT_DIR);
-    }
-
-    private void handleAnnotations(ClassNode classNode) {
-        if (classNode.visibleAnnotations != null) {
-            for (AnnotationNode annotation : classNode.visibleAnnotations) {
-                if (annotation.desc.contains("org/springframework/boot/autoconfigure/SpringBootApplication")) {
-                    // Simulate the behavior of @SpringBootApplication
-                    simulateSpringBootApplicationBehavior(classNode.name);
-                }
-                if (annotation.desc.contains("org/springframework/stereotype/Component")) {
-                    // Handle @Component annotation
-                    handleComponentAnnotation(classNode);
-                }
-            }
-        }
-
-        // Check for @Bean annotations on methods
-        for (MethodNode method : classNode.methods) {
-            if (method.visibleAnnotations != null) {
-                for (AnnotationNode annotation : method.visibleAnnotations) {
-                    if (annotation.desc.contains("org/springframework/context/annotation/Bean")) {
-                        // Handle @Bean annotation
-                        handleBeanAnnotation(classNode, method);
-                    }
-                }
-            }
-        }
-    }
-
-    private void handleComponentAnnotation(ClassNode classNode) {
-        // Simulate component scanning and initialization
-        String className = classNode.name;
-        // Assuming @Component classes have a default constructor
-        String constructorMethod = className + ".<init>()V";
-        callGraph.computeIfAbsent("org/springframework/context/annotation/ClassPathBeanDefinitionScanner.scan", k -> new HashSet<>())
-                .add(constructorMethod);
-    }
-
-    private void handleBeanAnnotation(ClassNode classNode, MethodNode method) {
-        // Simulate bean initialization
-        String methodName = classNode.name + "." + method.name + method.desc;
-        callGraph.computeIfAbsent("org/springframework/context/annotation/ConfigurationClassBeanDefinitionReader.loadBeanDefinitionsForBeanMethod", k -> new HashSet<>())
-                .add(methodName);
-    }
-
-    private void simulateSpringBootApplicationBehavior(String className) {
-        // Simulate SpringApplication.run
-        String springApplicationRunMethod = "org/springframework/boot/SpringApplication.run";
-        String runSignature = "(Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;";
-        callGraph.computeIfAbsent(className + ".<init>()V", k -> new HashSet<>())
-                .add(springApplicationRunMethod + runSignature);
+        System.out.println("breakpoint");
     }
 
     /**
@@ -138,7 +92,7 @@ public class CodeReachabilityAnalyzer {
 
             for (MethodNode method : classNode.methods) {
                 String methodName = classNode.name + "." + method.name + method.desc;
-                allMethods.add(methodName);
+                //allMethods.add(methodName);
                 Set<String> calledMethods = new HashSet<>();
                 if (method.instructions != null) {
                     for (AbstractInsnNode insn : method.instructions) {
@@ -151,8 +105,8 @@ public class CodeReachabilityAnalyzer {
                 callGraph.put(methodName, calledMethods);
             }
 
-            // Handle specific annotations
-            handleAnnotations(classNode);
+//            // Handle specific annotations
+//            handleAnnotations(classNode);
         }
     }
 
@@ -191,7 +145,7 @@ public class CodeReachabilityAnalyzer {
      * @return Matching class/methods
      */
     public static List<String> findMethodsByClassAndName(String className, String methodName) {
-        return allMethods.stream().filter(method -> method.startsWith(className + ".") &&
+        return callGraph.keySet().stream().filter(method -> method.startsWith(className + ".") &&
                 (methodName == null || methodName.isEmpty() ||
                         method.contains("." + methodName + "("))).collect(Collectors.toList());
     }
@@ -206,8 +160,13 @@ public class CodeReachabilityAnalyzer {
             String vulnerabilityId = codeTargetMapEntry.getKey();
             List<String> codeTargets = codeTargetMapEntry.getValue();
             for (String codeTarget : codeTargets) {
+                System.out.println("Getting execution paths for: " + codeTarget);
                 TreeNode<String> vulnerableCode = new TreeNode<>(codeTarget);
-                TreeUtil.createVulnerableCodeExecutionTree(vulnerableCode);
+                long startTime = System.nanoTime();
+                TreeUtil.createVulnerableCodeExecutionTree(vulnerableCode, 0);
+                long endTime = System.nanoTime();
+                long duration = endTime - startTime;
+                System.out.println("Execution time in milliseconds: " + (duration / 1_000_000));
                 List<List<String>> vulnerableCodeExecutionPaths = TreeUtil.retrieveVulnerableCodeExecutionPathsFromTree(vulnerableCode);
                 getReachableVulnerableCodeExecutionPaths(vulnerableCodeExecutionPaths, vulnerableCode, vulnerabilityId);
                 vulnerableCodeExecutionPathsMap.put(vulnerableCode.data, vulnerableCodeExecutionPaths);
@@ -287,5 +246,45 @@ public class CodeReachabilityAnalyzer {
      */
     public static Map<String, Set<String>> getCallGraph() {
         return callGraph;
+    }
+
+    /**
+     *
+     * @param filename
+     * @return
+     * @throws IOException
+     */
+    public Map<String, Set<String>> readCallGraphFromGzipFile(String filename) throws IOException {
+        Map<String, Set<String>> newCallGraph = new HashMap<>();
+        try (GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(filename));
+             BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",", 2);
+                if (parts.length == 2) {
+                    String key = parts[0];
+                    String value = parts[1];
+                    callGraph.computeIfAbsent(key, k -> new HashSet<>()).add(value);
+                }
+            }
+        }
+        return newCallGraph;
+    }
+
+    /**
+     *
+     * @param filename
+     * @throws IOException
+     */
+    private void writeCallGraphToGzipFile(String filename) throws IOException {
+        try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(new FileOutputStream(filename));
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(gzipOutputStream))) {
+            for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+                String key = entry.getKey();
+                for (String value : entry.getValue()) {
+                    writer.write(key + "," + value + "\n");
+                }
+            }
+        }
     }
 }

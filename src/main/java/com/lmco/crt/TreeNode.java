@@ -1,14 +1,13 @@
 package com.lmco.crt;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class TreeNode<T> implements Iterable<TreeNode<T>> {
 
     T data;
     TreeNode<T> parent;
     List<TreeNode<T>> children;
+    Set<T> childDataSet;
 
     public boolean isRoot() {
         return parent == null;
@@ -23,13 +22,28 @@ public class TreeNode<T> implements Iterable<TreeNode<T>> {
     public TreeNode(T data) {
         this.data = data;
         this.children = new LinkedList<TreeNode<T>>();
+        this.childDataSet = new HashSet<>();
     }
 
     public TreeNode<T> addChild(T child) {
         TreeNode<T> childNode = new TreeNode<T>(child);
         childNode.parent = this;
         this.children.add(childNode);
+        this.childDataSet.add(child);
         return childNode;
+    }
+
+    public boolean containsChild(T childData) {
+        return this.childDataSet.contains(childData);
+    }
+
+    public boolean contains(T childData) {
+        for (TreeNode<T> child : children) {
+            if (child.data.equals(childData)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int getLevel() {
