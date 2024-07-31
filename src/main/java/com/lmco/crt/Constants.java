@@ -1,5 +1,9 @@
 package com.lmco.crt;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public final class Constants {
 
     private Constants() {
@@ -14,5 +18,31 @@ public final class Constants {
     public static final String CRT_DEPENDENCIES_JAR_PATH = "jars\\crt-dependencies-0.4.0.jar";
     public static final String CRT_TEST_DEPENDENCIES_JAR_PATH = "jars\\crt-test-dependencies-0.4.0.jar";
     public static final String CRT_CLASSPATH_DEPENDENCIES_JAR_PATH = "jars\\crt-classpath-dependencies-0.4.0.jar";
+    public static final List<String> SERVICE_ANNOTATIONS = Arrays.asList(
+        "@SpringBootApplication",
+        "@EnableSwagger2",
+        "@ComponentScan",
+        "@Api",
+        "@Javax.xml.bind.annotation.XmlRootElement",
+        "@XmlTransient",
+        "@ApiOperation",
+        "@ApiResponse",
+        "@RequestMapping",
+        "@ApiParam",
+        "@NotNull",
+        "@Validated",
+        "@JsonProperty",
+        "@Component",
+        "@Configuration",
+        "@ComponentScan",
+        "@Bean",
+        "@Autowired",
+        "@Order",
+        "@ControllerAdvice",
+        "@Value",
+        "@ConditionalOnBean",
+        "@Controller",
+        "@Repository"
+    );
 
 }
