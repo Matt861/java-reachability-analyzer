@@ -317,3 +317,167 @@
     //                (methodName == null || methodName.isEmpty() ||
     //                        method.contains("." + methodName + "("))).collect(Collectors.toList());
     //    }
+
+
+    private void handleAnnotations(ClassNode classNode) {
+        // Handle class-level annotations
+        if (classNode.visibleAnnotations != null) {
+            for (AnnotationNode annotation : classNode.visibleAnnotations) {
+                simulateAnnotationBehavior(classNode.name, annotation.desc);
+            }
+        }
+
+        // Handle method-level annotations
+        for (MethodNode method : classNode.methods) {
+            if (method.visibleAnnotations != null) {
+                for (AnnotationNode annotation : method.visibleAnnotations) {
+                    simulateAnnotationBehavior(method.name, annotation.desc);
+                }
+            }
+        }
+    }
+
+    private void simulateAnnotationBehavior(String elementName, String annotationDesc) {
+        // Simulate annotation behavior based on a generic heuristic or specific rules
+        String annotationBehavior = "AnnotationBehavior." + annotationDesc.replace("/", ".");
+        callGraph.computeIfAbsent(elementName, k -> new HashSet<>())
+                .add(annotationBehavior + "()");
+    }
+
+    // THIS IS THE BEST ONE
+    public static void createVulnerableCodeExecutionTreeRecursive(TreeNode<String> vulnerableCode, int depth) {
+        //System.out.println("createVulnerableCodeExecutionTree recursion depth: " + depth);
+
+        // Avoid infinite loops by checking visited nodes first
+        if (visitedNodes.contains(vulnerableCode.data)) {
+            return;
+        }
+
+        visitedNodes.add(vulnerableCode.data);
+
+        // Check for memoized results
+        if (memoizedTrees.containsKey(vulnerableCode.data)) {
+            TreeNode<String> memoizedSubtree = memoizedTrees.get(vulnerableCode.data);
+            for (TreeNode<String> child : memoizedSubtree.children) {
+                vulnerableCode.addChild(cloneTree(child).data);
+            }
+            return;
+        }
+
+        for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
+            String callingCode = entry.getKey();
+            if (entry.getValue().contains(vulnerableCode.data)) {
+                boolean alreadyHasChild = false;
+                for (TreeNode<String> child : vulnerableCode.children) {
+                    if (child.data.equals(callingCode)) {
+                        alreadyHasChild = true;
+                        break;
+                    }
+                }
+                if (!alreadyHasChild) {
+                    TreeNode<String> child = vulnerableCode.addChild(callingCode);
+                    createVulnerableCodeExecutionTreeRecursive(child, depth + 1);
+                } else {
+                    System.out.println("Tree children already contain callingCode");
+                }
+            }
+        }
+
+        // Memoize the result for the current vulnerableCode node
+        memoizedTrees.put(vulnerableCode.data, cloneTree(vulnerableCode));
+    }
+
+    private void mapInterfacesToMethods() {
+        Map<String, Set<String>> map = new HashMap<>();
+        Set<Set<String>> commonSets = new HashSet<>();
+
+        // Populate the map with second and third strings from the first list
+        for (Set<String> set : allMethods) {
+            String[] array = set.toArray(new String[0]);
+            if (array.length < 3) {
+                continue; // Ensure each set has at least 3 elements
+            }
+            //Arrays.sort(array); // Sort to ensure consistent order
+            String key = array[1] + "," + array[2];
+            if (!map.containsKey(key)) {
+                map.put(key, set);
+            }
+            else {
+                System.out.println("breakpoint");
+            }
+
+        }
+
+        // Check for common sets in the second list
+        for (Set<String> set : interfaces) {
+            String[] interfaceArray = set.toArray(new String[0]);
+            if (interfaceArray.length < 3) {
+                continue; // Ensure each set has at least 3 elements
+            }
+            //Arrays.sort(interfaceArray); // Sort to ensure consistent order
+            String key = interfaceArray[1] + "," + interfaceArray[2];
+            if (map.containsKey(key)) {
+                if (key.contains("postProcessBeanDefinitionRegistry(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V")) {
+                    System.out.println("breakpoint");
+                }
+                Set<String> methodSet = map.get(key);
+                String[] methodArray = methodSet.toArray(new String[0]);
+                String interfaceName = interfaceArray[0] + "." + interfaceArray[1] + interfaceArray[2];
+                String methodName = methodArray[0] + "." + methodArray[1] + methodArray[2];
+                interfaceMap.put(interfaceName, methodName);
+                commonSets.add(map.get(key));
+                commonSets.add(set); // Also add the matching set from the second list
+            }
+        }
+    }
+
+    public static void createVulnerableCodeExecutionTreeRecursive2(TreeNode<String> vulnerableCode, int depth, Boolean isInterface) {
+
+        if (memorizedTrees.containsKey(vulnerableCode.data)) {
+            vulnerableCode.children.add(memorizedTrees.get(vulnerableCode.data));
+
+            return;
+        }
+
+    //        if (memoizedTrees.containsKey(vulnerableCode.data)) {
+    //
+    //            return;
+    //        }
+
+        if (visitedNodes.contains(vulnerableCode.data)) {
+            return;
+                 if (vulnerableCode.data != callingCode) {
+              }
+
+        visitedNodes.add(vulnerableCode.data);
+
+        for (Map.Entry<String, Set<String>> entry : Constants.callGraph.entrySet()) {
+            String callingCode = entry.getKey();
+            if (entry.getValue().contains(vulnerableCode.data)) {
+                if (!vulnerableCode.children.contains(callingCode)) {
+                            TreeNode<String> child = vulnerableCode.addChild(callingCode, isInterface);
+                        createVulnerableCodeExecutionTreeRecursive2(child, depth + 1, isInterface);
+                    }
+                } else {
+                    System.out.println("Tree children already contain callingCode");
+                }
+            }
+        }
+
+        memorizedTrees.put(vulnerableCode.data, vulnerableCode);
+    }
+
+
+   public static void removeConsecutiveDuplicates(TreeNode<String> node) {
+       Set<String> uniqueChildren = new HashSet<>();
+       Iterator<TreeNode<String>> iterator = node.children.iterator();
+       while (iterator.hasNext()) {
+           TreeNode<String> child = iterator.next();
+           if (uniqueChildren.contains(child.data)) {
+               iterator.remove();
+           } else {
+               uniqueChildren.add(child.data);
+               removeConsecutiveDuplicates(child);
+           }
+       }
+   }

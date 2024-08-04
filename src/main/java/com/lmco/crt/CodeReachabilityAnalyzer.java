@@ -1,6 +1,6 @@
 package com.lmco.crt;
 
-import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 import java.io.*;
@@ -8,68 +8,42 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
-/**
- * Class that performs a static code analysis of a fat jar.
- * Generates all code execution paths to user inputted class/methods.
- * Determines if generated execution paths are reachable by the main application of the jar.
- */
 public class CodeReachabilityAnalyzer {
-
-    private static final Map<String, List<String>> TARGET_CODE_MAP = Utilities.readCsvFromResources(Constants.CSV_FILE_NAME);
-    private static final Map<String, Set<String>> callGraph = new HashMap<>();
-    //private static final Set<String> allMethods = new HashSet<>();
-    private static final Map<String, List<String>> modifiedTargetCodeMap = new HashMap<>(TARGET_CODE_MAP);
-    protected static final Map<String, Map<String, List<List<String>>>> vulnerableCodeExecutionMap = new HashMap<>();
-    protected static final Map<String, Map<String, List<List<String>>>> reachableVulnerableCodeExecutionMap = new HashMap<>();
-
-    /**
-     * Main execution:
-     * 1) Read fat jar contents and create code call graph
-     * 2) Modify user inputted class/method names to be more defined
-     * 3) Use call graph to create a tree of vulnerable code execution paths
-     * 4) Write all vulnerable execution paths to output file
-     * 5) Write reachable vulnerable execution paths to output file
-     * @param args None
-     * @throws IOException N/A
-     */
     public static void main(String[] args) throws IOException {
-        File serviceJar = new File(Constants.SERVICE_JAR_PATH);
-        File dependenciesJar = new File(Constants.CRT_DEPENDENCIES_JAR_PATH);
-        File testDependenciesJar = new File(Constants.CRT_TEST_DEPENDENCIES_JAR_PATH);
-        File classpathDependenciesJar = new File(Constants.CRT_CLASSPATH_DEPENDENCIES_JAR_PATH);
-        CodeReachabilityAnalyzer analyzer = new CodeReachabilityAnalyzer();
-        analyzer.analyzeJar(serviceJar);
-        analyzer.analyzeJar(dependenciesJar);
-        analyzer.analyzeJar(classpathDependenciesJar);
-        analyzer.analyzeJar(testDependenciesJar);
-        //analyzer.readCallGraphFromGzipFile("input\\CallGraph.csv.gz");
-        //analyzer.writeCallGraphToGzipFile("input\\CallGraph.csv.gz");
-        analyzer.modifyVulnerableCodeSources();
-        analyzer.getVulnerableCodeExecutionPaths();
-        analyzer.writeCodeExecutionPaths(vulnerableCodeExecutionMap, Constants.EXECUTION_PATHS_OUTPUT_DIR);
-        analyzer.writeCodeExecutionPaths(reachableVulnerableCodeExecutionMap, Constants.REACHABLE_PATHS_OUTPUT_DIR);
+        String serviceJarPath = Constants.SERVICE_JAR_PATH;
+        String dependenciesJarPath = Constants.CRT_DEPENDENCIES_JAR_PATH;
+        analyzeJarFile(serviceJarPath);
+        analyzeJarFile(dependenciesJarPath);
+        analyzeClasses();
+        //Map<String, byte[]> classBytesMap = Constants.classBytesMap;
+        //Map<String, List<String>> methodInterfaceMap = Constants.methodInterfaceMap;
+        //Map<String, Set<String>> callGraph = Constants.callGraph;
+        modifyVulnerableCodeSources();
+        getVulnerableCodeExecutionPaths();
+        writeCodeExecutionPaths(Constants.vulnerableCodeExecutionMap, Constants.EXECUTION_PATHS_OUTPUT_DIR);
+        writeCodeExecutionPaths(Constants.reachableVulnerableCodeExecutionMap, Constants.REACHABLE_PATHS_OUTPUT_DIR);
         System.out.println("breakpoint");
+        //        Constants.methodInterfaceMap.forEach((method, interfaces) -> {
+//            System.out.println("Class Method: " + method);
+//            interfaces.forEach(iface -> System.out.println("  Overrides Interface Method: " + iface));
+//        });
     }
 
     /**
-     * Loops fat jar file contents to find all classes and sends
-     * the classes to the anaylzeClass method for further analysis.
-     * @param jarFile Fat jar containing source code and dependency source code
-     * @throws IOException N/A
+     *
+     * @param jarFilePath
+     * @throws IOException
      */
-    protected void analyzeJar(File jarFile) throws IOException {
-        try (JarFile jar = new JarFile(jarFile)) {
-            Enumeration<JarEntry> entries = jar.entries();
+    public static void analyzeJarFile(String jarFilePath) throws IOException {
+        try (JarFile jarFile = new JarFile(jarFilePath)) {
+            Enumeration<JarEntry> entries = jarFile.entries();
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
-                if (entry.getName().endsWith(".class") && !entry.getName().contains("META-INF/")) {
-                    try {
-                        analyzeClass(jar, entry);
-                    } catch (SecurityException | IOException e) {
-                        System.err.println("Skipping entry due to error: " + entry.getName() + " - " + e.getMessage());
+                if (entry.getName().endsWith(".class")) {
+                    try (InputStream inputStream = jarFile.getInputStream(entry)) {
+                        byte[] classBytes = readAllBytes(inputStream);
+                        Constants.classBytesMap.put(entry.getName().replace(".class", ""), classBytes);
                     }
                 }
             }
@@ -77,37 +51,81 @@ public class CodeReachabilityAnalyzer {
     }
 
     /**
-     * Retrieve all methods from the class and adds them as keys to the callGraph.
-     * Additionally, retrieves all called methods, constructors, etc. from the classes methods
-     * and adds them as values to the callGraph.
-     * @param jar Fat jar containing source code and dependency source code
-     * @param entry Class file from jar
-     * @throws IOException N/A
+     *
      */
-    private void analyzeClass(JarFile jar, JarEntry entry) throws IOException {
-        try (InputStream inputStream = jar.getInputStream(entry)) {
-            ClassReader classReader = new ClassReader(inputStream);
+    public static void analyzeClasses() {
+        for (Map.Entry<String, byte[]> entry : Constants.classBytesMap.entrySet()) {
+            ClassReader classReader = new ClassReader(entry.getValue());
             ClassNode classNode = new ClassNode();
             classReader.accept(classNode, 0);
 
-            for (MethodNode method : classNode.methods) {
-                String methodName = classNode.name + "." + method.name + method.desc;
-                //allMethods.add(methodName);
+            for (MethodNode methodNode : classNode.methods) {
+                String methodName = classNode.name + "." + methodNode.name + methodNode.desc;
                 Set<String> calledMethods = new HashSet<>();
-                if (method.instructions != null) {
-                    for (AbstractInsnNode insn : method.instructions) {
+                if (methodNode.instructions != null) {
+                    for (AbstractInsnNode insn : methodNode.instructions) {
                         if (insn.getType() == AbstractInsnNode.METHOD_INSN) {
                             MethodInsnNode methodInsn = (MethodInsnNode) insn;
                             calledMethods.add(methodInsn.owner + "." + methodInsn.name + methodInsn.desc);
                         }
                     }
                 }
-                callGraph.put(methodName, calledMethods);
+                if (classNode.interfaces != null) {
+                    List<String> interfaces = getOverriddenInterfaceMethods(classNode, methodNode);
+                    if (!interfaces.isEmpty()) {
+                        Constants.methodInterfaceMap.put(classNode.name + "." + methodNode.name + methodNode.desc, interfaces);
+                    }
+                }
+                Constants.callGraph.put(methodName, calledMethods);
             }
-
-//            // Handle specific annotations
-//            handleAnnotations(classNode);
         }
+    }
+
+    /**
+     *
+     * @param inputStream
+     * @return
+     * @throws IOException
+     */
+    private static byte[] readAllBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        int nRead;
+        byte[] data = new byte[16384];
+        while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+        buffer.flush();
+        return buffer.toByteArray();
+    }
+
+    /**
+     *
+     * @param classNode
+     * @param methodNode
+     * @return
+     */
+    private static List<String> getOverriddenInterfaceMethods(ClassNode classNode, MethodNode methodNode) {
+        List<String> overriddenInterfaceMethods = new ArrayList<>();
+        for (String interfaceName : classNode.interfaces) {
+            byte[] interfaceBytes = Constants.classBytesMap.get(interfaceName);
+            if (interfaceBytes != null) {
+                try {
+                    ClassReader interfaceReader = new ClassReader(interfaceBytes);
+                    ClassNode interfaceNode = new ClassNode();
+                    interfaceReader.accept(interfaceNode, 0);
+
+                    for (MethodNode interfaceMethod : interfaceNode.methods) {
+                        if (methodNode.name.equals(interfaceMethod.name) && methodNode.desc.equals(interfaceMethod.desc)) {
+                            overriddenInterfaceMethods.add(interfaceName + "." + interfaceMethod.name + interfaceMethod.desc);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to read interface: " + interfaceName);
+                    e.printStackTrace();
+                }
+            }
+        }
+        return overriddenInterfaceMethods;
     }
 
     /**
@@ -115,8 +133,8 @@ public class CodeReachabilityAnalyzer {
      * class/methods from the allMethods data structure.  The retrieved
      * class/methods are used for evaluation in place of the user inputted class/methods.
      */
-    protected void modifyVulnerableCodeSources() {
-        for (Map.Entry<String, List<String>> targetMapEntry : modifiedTargetCodeMap.entrySet()) {
+    protected static void modifyVulnerableCodeSources() {
+        for (Map.Entry<String, List<String>> targetMapEntry : Constants.modifiedTargetCodeMap.entrySet()) {
             List<String> updatedCodeTargets = new ArrayList<>();
             String vulnerabilityId = targetMapEntry.getKey();
             List<String> codeTargets = targetMapEntry.getValue();
@@ -133,7 +151,7 @@ public class CodeReachabilityAnalyzer {
                 }
                 updatedCodeTargets.addAll(newCodeTargets);
             }
-            modifiedTargetCodeMap.put(vulnerabilityId, updatedCodeTargets);
+            Constants.modifiedTargetCodeMap.put(vulnerabilityId, updatedCodeTargets);
         }
     }
 
@@ -145,7 +163,7 @@ public class CodeReachabilityAnalyzer {
      * @return Matching class/methods
      */
     public static List<String> findMethodsByClassAndName(String className, String methodName) {
-        return callGraph.keySet().stream().filter(method -> method.startsWith(className + ".") &&
+        return Constants.callGraph.keySet().stream().filter(method -> method.startsWith(className + ".") &&
                 (methodName == null || methodName.isEmpty() ||
                         method.contains("." + methodName + "("))).collect(Collectors.toList());
     }
@@ -154,24 +172,23 @@ public class CodeReachabilityAnalyzer {
      * Creates code execution paths for the class/methods in the fat jar
      * that match the user inputted class/methods
      */
-    protected void getVulnerableCodeExecutionPaths() {
-        for (Map.Entry<String, List<String>> codeTargetMapEntry : modifiedTargetCodeMap.entrySet()) {
+    protected static void getVulnerableCodeExecutionPaths() {
+        for (Map.Entry<String, List<String>> codeTargetMapEntry : Constants.modifiedTargetCodeMap.entrySet()) {
             Map<String, List<List<String>>> vulnerableCodeExecutionPathsMap = new HashMap<>();
             String vulnerabilityId = codeTargetMapEntry.getKey();
             List<String> codeTargets = codeTargetMapEntry.getValue();
             for (String codeTarget : codeTargets) {
                 System.out.println("Getting execution paths for: " + codeTarget);
-                TreeNode<String> vulnerableCode = new TreeNode<>(codeTarget);
                 long startTime = System.nanoTime();
-                TreeUtil.createVulnerableCodeExecutionTree(vulnerableCode, 0);
+                TreeNode<String> vulnerableCode = TreeUtil.createVulnerableCodeExecutionTree(codeTarget);
                 long endTime = System.nanoTime();
                 long duration = endTime - startTime;
                 System.out.println("Execution time in milliseconds: " + (duration / 1_000_000));
                 List<List<String>> vulnerableCodeExecutionPaths = TreeUtil.retrieveVulnerableCodeExecutionPathsFromTree(vulnerableCode);
-                getReachableVulnerableCodeExecutionPaths(vulnerableCodeExecutionPaths, vulnerableCode, vulnerabilityId);
-                vulnerableCodeExecutionPathsMap.put(vulnerableCode.data, vulnerableCodeExecutionPaths);
+                getReachableVulnerableCodeExecutionPaths(vulnerableCodeExecutionPaths, codeTarget, vulnerabilityId);
+                vulnerableCodeExecutionPathsMap.put(codeTarget, vulnerableCodeExecutionPaths);
             }
-            vulnerableCodeExecutionMap.put(vulnerabilityId, vulnerableCodeExecutionPathsMap);
+            Constants.vulnerableCodeExecutionMap.put(vulnerabilityId, vulnerableCodeExecutionPathsMap);
         }
     }
 
@@ -183,24 +200,24 @@ public class CodeReachabilityAnalyzer {
      * @param vulnerableCode class/method that contains vulnerable code
      * @param vulnerabilityId ID of the vulnerability that has a compromised class/method being evaluated
      */
-    private void getReachableVulnerableCodeExecutionPaths(List<List<String>> vulnerableCodeExecutionPaths, TreeNode<String> vulnerableCode, String vulnerabilityId) {
+    protected static void getReachableVulnerableCodeExecutionPaths(List<List<String>> vulnerableCodeExecutionPaths, String vulnerableCode, String vulnerabilityId) {
         Map<String, List<List<String>>> reachableVulnerableCodeExecutionPathsMap = new HashMap<>();
         List<List<String>> reachableVulnerableCodePaths = new ArrayList<>();
         boolean isReachable = false;
         for (List<String> vulnerableCodeExecutionPath : vulnerableCodeExecutionPaths) {
             for (String path : vulnerableCodeExecutionPath) {
                 if (path.contains(Constants.APPLICATION_GROUP)) {
-                    // This copy needs to happen to that the list reversal that happens later doesn't affect both lists
+                    // This copy needs to happen so that the list reversal that happens later doesn't affect both lists
                     List<String> vulnerableCodeExecutionPathCopy = new ArrayList<>(vulnerableCodeExecutionPath);
                     reachableVulnerableCodePaths.add(vulnerableCodeExecutionPathCopy);
                     isReachable = true;
                     break;
                 }
             }
-            reachableVulnerableCodeExecutionPathsMap.put(vulnerableCode.data, reachableVulnerableCodePaths);
+            reachableVulnerableCodeExecutionPathsMap.put(vulnerableCode, reachableVulnerableCodePaths);
         }
         if (isReachable) {
-            reachableVulnerableCodeExecutionMap.put(vulnerabilityId, reachableVulnerableCodeExecutionPathsMap);
+            Constants.reachableVulnerableCodeExecutionMap.put(vulnerabilityId, reachableVulnerableCodeExecutionPathsMap);
         }
     }
 
@@ -209,7 +226,7 @@ public class CodeReachabilityAnalyzer {
      * @param codeExecutionMap Map that links Vulnerability Id, vulnerable code, and vulnerable code execution paths together
      * @param filePath Directory of the generated text file
      */
-    protected void writeCodeExecutionPaths(Map<String, Map<String, List<List<String>>>> codeExecutionMap, String filePath) {
+    protected static void writeCodeExecutionPaths(Map<String, Map<String, List<List<String>>>> codeExecutionMap, String filePath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Map.Entry<String, Map<String, List<List<String>>>> codeExecutionMapping : codeExecutionMap.entrySet()) {
                 String vulnerabilityId = codeExecutionMapping.getKey();
@@ -237,54 +254,6 @@ public class CodeReachabilityAnalyzer {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * Getter method for callGraph
-     * @return callGraph
-     */
-    public static Map<String, Set<String>> getCallGraph() {
-        return callGraph;
-    }
-
-    /**
-     *
-     * @param filename
-     * @return
-     * @throws IOException
-     */
-    public Map<String, Set<String>> readCallGraphFromGzipFile(String filename) throws IOException {
-        Map<String, Set<String>> newCallGraph = new HashMap<>();
-        try (GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(filename));
-             BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", 2);
-                if (parts.length == 2) {
-                    String key = parts[0];
-                    String value = parts[1];
-                    callGraph.computeIfAbsent(key, k -> new HashSet<>()).add(value);
-                }
-            }
-        }
-        return newCallGraph;
-    }
-
-    /**
-     *
-     * @param filename
-     * @throws IOException
-     */
-    private void writeCallGraphToGzipFile(String filename) throws IOException {
-        try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(new FileOutputStream(filename));
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(gzipOutputStream))) {
-            for (Map.Entry<String, Set<String>> entry : callGraph.entrySet()) {
-                String key = entry.getKey();
-                for (String value : entry.getValue()) {
-                    writer.write(key + "," + value + "\n");
-                }
-            }
         }
     }
 }

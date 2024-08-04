@@ -1,0 +1,54 @@
+Vulnerability ID: CVE-XXX-XXX4
+  Vulnerable Code: org/springframework/context/annotation/ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V
+      Execution Path: 
+           ->com/lmco/crt/Main.main([Ljava/lang/String;)V
+            ->org/springframework/boot/SpringApplication.run(Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+             ->org/springframework/boot/SpringApplication.run([Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+              ->org/springframework/boot/SpringApplication.run([Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+               ->org/springframework/boot/SpringApplication.refreshContext(Lorg/springframework/context/ConfigurableApplicationContext;)V
+                ->org/springframework/boot/SpringApplication.refresh(Lorg/springframework/context/ApplicationContext;)V
+                 ->org/springframework/context/support/AbstractApplicationContext.refresh()V
+                  ->org/springframework/context/support/AbstractApplicationContext.invokeBeanFactoryPostProcessors(Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory;)V
+                   ->org/springframework/context/support/PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory;Ljava/util/List;)V
+                    ->Interface: org/springframework/beans/factory/support/BeanDefinitionRegistryPostProcessor.postProcessBeanDefinitionRegistry(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V
+                     ->org/springframework/context/annotation/ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V
+Vulnerability ID: CVE-XXX-XXX3
+  Vulnerable Code: org/springframework/context/annotation/ConfigurationClassPostProcessor.processConfigBeanDefinitions(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V
+      Execution Path: 
+           ->com/lmco/crt/Main.main([Ljava/lang/String;)V
+            ->org/springframework/boot/SpringApplication.run(Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+             ->org/springframework/boot/SpringApplication.run([Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+              ->org/springframework/boot/SpringApplication.run([Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+               ->org/springframework/boot/SpringApplication.refreshContext(Lorg/springframework/context/ConfigurableApplicationContext;)V
+                ->org/springframework/boot/SpringApplication.refresh(Lorg/springframework/context/ApplicationContext;)V
+                 ->org/springframework/context/support/AbstractApplicationContext.refresh()V
+                  ->org/springframework/context/support/AbstractApplicationContext.invokeBeanFactoryPostProcessors(Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory;)V
+                   ->org/springframework/context/support/PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory;Ljava/util/List;)V
+                    ->Interface: org/springframework/beans/factory/support/BeanDefinitionRegistryPostProcessor.postProcessBeanDefinitionRegistry(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V
+                     ->org/springframework/context/annotation/ConfigurationClassPostProcessor.processConfigBeanDefinitions(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V
+Vulnerability ID: CVE-XXX-XXX2
+  Vulnerable Code: org/springframework/beans/factory/support/BeanDefinitionRegistryPostProcessor.postProcessBeanDefinitionRegistry(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V
+      Execution Path: 
+           ->com/lmco/crt/Main.main([Ljava/lang/String;)V
+            ->org/springframework/boot/SpringApplication.run(Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+             ->org/springframework/boot/SpringApplication.run([Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+              ->org/springframework/boot/SpringApplication.run([Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+               ->org/springframework/boot/SpringApplication.refreshContext(Lorg/springframework/context/ConfigurableApplicationContext;)V
+                ->org/springframework/boot/SpringApplication.refresh(Lorg/springframework/context/ApplicationContext;)V
+                 ->org/springframework/context/support/AbstractApplicationContext.refresh()V
+                  ->org/springframework/context/support/AbstractApplicationContext.invokeBeanFactoryPostProcessors(Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory;)V
+                   ->org/springframework/context/support/PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory;Ljava/util/List;)V
+                    ->Interface: org/springframework/beans/factory/support/BeanDefinitionRegistryPostProcessor.postProcessBeanDefinitionRegistry(Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;)V
+Vulnerability ID: CVE-XXX-XXX1
+  Vulnerable Code: org/springframework/context/support/PostProcessorRegistrationDelegate.invokeBeanDefinitionRegistryPostProcessors(Ljava/util/Collection;Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;Lorg/springframework/core/metrics/ApplicationStartup;)V
+      Execution Path: 
+           ->com/lmco/crt/Main.main([Ljava/lang/String;)V
+            ->org/springframework/boot/SpringApplication.run(Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+             ->org/springframework/boot/SpringApplication.run([Ljava/lang/Class;[Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+              ->org/springframework/boot/SpringApplication.run([Ljava/lang/String;)Lorg/springframework/context/ConfigurableApplicationContext;
+               ->org/springframework/boot/SpringApplication.refreshContext(Lorg/springframework/context/ConfigurableApplicationContext;)V
+                ->org/springframework/boot/SpringApplication.refresh(Lorg/springframework/context/ApplicationContext;)V
+                 ->org/springframework/context/support/AbstractApplicationContext.refresh()V
+                  ->org/springframework/context/support/AbstractApplicationContext.invokeBeanFactoryPostProcessors(Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory;)V
+                   ->org/springframework/context/support/PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory;Ljava/util/List;)V
+                    ->org/springframework/context/support/PostProcessorRegistrationDelegate.invokeBeanDefinitionRegistryPostProcessors(Ljava/util/Collection;Lorg/springframework/beans/factory/support/BeanDefinitionRegistry;Lorg/springframework/core/metrics/ApplicationStartup;)V

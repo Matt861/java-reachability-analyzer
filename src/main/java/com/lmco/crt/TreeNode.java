@@ -8,6 +8,7 @@ public class TreeNode<T> implements Iterable<TreeNode<T>> {
     TreeNode<T> parent;
     List<TreeNode<T>> children;
     Set<T> childDataSet;
+    Boolean isInterfaceNode;
 
     public boolean isRoot() {
         return parent == null;
@@ -19,17 +20,19 @@ public class TreeNode<T> implements Iterable<TreeNode<T>> {
 
     private List<TreeNode<T>> elementsIndex;
 
-    public TreeNode(T data) {
+    public TreeNode(T data, Boolean isInterface) {
         this.data = data;
         this.children = new LinkedList<TreeNode<T>>();
         this.childDataSet = new HashSet<>();
+        this.isInterfaceNode = isInterface;
     }
 
-    public TreeNode<T> addChild(T child) {
-        TreeNode<T> childNode = new TreeNode<T>(child);
+    public TreeNode<T> addChild(T child, Boolean isInterface) {
+        TreeNode<T> childNode = new TreeNode<T>(child, isInterface);
         childNode.parent = this;
         this.children.add(childNode);
         this.childDataSet.add(child);
+        childNode.isInterfaceNode = isInterface;
         return childNode;
     }
 
