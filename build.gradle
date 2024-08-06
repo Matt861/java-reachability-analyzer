@@ -34,9 +34,6 @@ dependencies {
     implementation 'org.ow2.asm:asm-tree:7.2'
     implementation 'org.apache.commons:commons-compress:1.19'
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.2.7.RELEASE'
-    //testImplementation 'com.lmco.crt:crt-test-dependencies:0.4.0'
-//    testImplementation platform('org.junit:junit-bom:5.9.1')
-//    testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 test {
@@ -101,3 +98,26 @@ tasks.processResources.dependsOn writeConfigProperties
 //artifacts {
 //    archives fatJar
 //}
+
+// **** MAIN JAR EXAMPLE ****
+//task mainJar(type: Jar) {
+//    from {
+//        sourceSets.main.output
+//    }
+//    archiveBaseName.set('crt-service')
+//    archiveVersion.set('1.0-SNAPSHOT')
+//    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+//}
+//
+//// **** TEST JAR EXAMPLE ****
+//task testJar(type: Jar) {
+//    from {
+//        sourceSets.test.allSource
+//    }
+//    archiveBaseName.set('crt-service-test')
+//    archiveVersion.set('1.0-SNAPSHOT')
+//    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+//}
+//
+//// Make sure the test classes are compiled before creating the JAR
+//testJar.dependsOn(testClasses)
