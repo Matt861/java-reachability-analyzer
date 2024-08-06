@@ -14,7 +14,8 @@ public class AnalyzerProperties {
     private static String classpathCsvFileName;
     private static String executionPathsOutputDir;
     private static String reachablePathsOutputDir;
-    private static String serviceJar;
+    private static String mainServiceJar;
+    private static String testServiceJar;
     private static String crtDependenciesJar;
     private static String crtTestDependenciesJar;
     private static String crtClasspathDependenciesJar;
@@ -40,7 +41,8 @@ public class AnalyzerProperties {
     public static String getReachablePathsOutputDir() {
         return reachablePathsOutputDir;
     }
-    public static String getServiceJar() { return serviceJar; }
+    public static String getMainServiceJar() { return mainServiceJar; }
+    public static String getTestServiceJar() { return testServiceJar; }
     public static String getCrtDependenciesJar() {
         return crtDependenciesJar;
     }
@@ -64,7 +66,8 @@ public class AnalyzerProperties {
             classpathCsvFileName = properties.getProperty("classpath.csv.file.name");
             executionPathsOutputDir = properties.getProperty("execution.paths.output.dir");
             reachablePathsOutputDir = properties.getProperty("reachable.paths.output.dir");
-            serviceJar = properties.getProperty("service.jar");
+            mainServiceJar = properties.getProperty("main.service.jar");
+            testServiceJar = properties.getProperty("test.service.jar");
             crtDependenciesJar = properties.getProperty("crt.dependencies.jar");
             crtTestDependenciesJar = properties.getProperty("crt.test.dependencies.jar");
             crtClasspathDependenciesJar = properties.getProperty("crt.classpath.dependencies.jar");

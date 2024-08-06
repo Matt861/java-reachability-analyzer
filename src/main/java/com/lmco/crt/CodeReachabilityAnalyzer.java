@@ -26,19 +26,22 @@ public class CodeReachabilityAnalyzer {
     }
 
     public static void analyzeJarFiles() {
-        analyzeJarFile(AnalyzerProperties.getServiceJar());
-
         switch (Constants.ANALYSIS_TYPE) {
             case MAIN:
+                analyzeJarFile(AnalyzerProperties.getMainServiceJar());
                 analyzeJarFile(AnalyzerProperties.getCrtDependenciesJar());
                 break;
             case TEST:
+                analyzeJarFile(AnalyzerProperties.getTestServiceJar());
                 analyzeJarFile(AnalyzerProperties.getCrtTestDependenciesJar());
                 break;
             case CLASSPATH:
+                analyzeJarFile(AnalyzerProperties.getMainServiceJar());
                 analyzeJarFile(AnalyzerProperties.getCrtClasspathDependenciesJar());
                 break;
             case ALL:
+                analyzeJarFile(AnalyzerProperties.getMainServiceJar());
+                analyzeJarFile(AnalyzerProperties.getTestServiceJar());
                 analyzeJarFile(AnalyzerProperties.getCrtDependenciesJar());
                 analyzeJarFile(AnalyzerProperties.getCrtTestDependenciesJar());
                 analyzeJarFile(AnalyzerProperties.getCrtClasspathDependenciesJar());

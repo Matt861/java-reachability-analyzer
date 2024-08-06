@@ -14,7 +14,6 @@ repositories {
 }
 
 application {
-    // Replace 'com.example.Main' with your main class name
     mainClassName = 'com.lmco.crt.CodeReachabilityAnalyzer'
 }
 
