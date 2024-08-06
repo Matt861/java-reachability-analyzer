@@ -28,7 +28,7 @@ public class ReachabilityTest {
 
     @Test
     public void test2() throws IOException {
-        Map<String, Set<String>> callGraph = Constants.callGraph;
+        Map<String, Set<String>> callGraph = Constants.CALL_GRAPH;
         try (GZIPInputStream gzipInputStream = new GZIPInputStream(Files.newInputStream(Paths.get("input\\CallGraph.csv.gz")));
              BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream))) {
             String line;
@@ -37,7 +37,7 @@ public class ReachabilityTest {
                 if (parts.length == 2) {
                     String key = parts[0];
                     String value = parts[1];
-                    Constants.callGraph.computeIfAbsent(key, k -> new HashSet<>()).add(value);
+                    Constants.CALL_GRAPH.computeIfAbsent(key, k -> new HashSet<>()).add(value);
                 }
             }
         }

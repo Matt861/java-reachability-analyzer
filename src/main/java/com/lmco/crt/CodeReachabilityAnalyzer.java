@@ -9,31 +9,41 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+
 public class CodeReachabilityAnalyzer {
-    public static void main(String[] args) throws IOException {
-        String serviceJarPath = Constants.SERVICE_JAR_PATH;
-        String dependenciesJarPath = Constants.CRT_DEPENDENCIES_JAR_PATH;
-        analyzeJarFile(serviceJarPath);
-        analyzeJarFile(dependenciesJarPath);
+
+    public static void main(String[] args) {
+        AnalyzerProperties.loadProperties();
+        analyzeJarFiles();
         analyzeClasses();
-        //Map<String, byte[]> classBytesMap = Constants.classBytesMap;
-        //Map<String, List<String>> methodInterfaceMap = Constants.methodInterfaceMap;
-        //Map<String, Set<String>> callGraph = Constants.callGraph;
         modifyVulnerableCodeSources();
-        //findCommonValues();
         getVulnerableCodeExecutionPaths();
-        long startTime = System.nanoTime();
-        System.out.println("Writing execution paths");
-        writeCodeExecutionPaths(Constants.vulnerableCodeExecutionMap, Constants.EXECUTION_PATHS_OUTPUT_DIR);
-        writeCodeExecutionPaths(Constants.reachableVulnerableCodeExecutionMap, Constants.REACHABLE_PATHS_OUTPUT_DIR);
-        long endTime = System.nanoTime();
-        long duration = endTime - startTime;
-        System.out.println("Execution time in milliseconds: " + (duration / 1_000_000));
+        Utilities.startCodeExecutionTimer("Writing execution paths");
+        writeCodeExecutionPaths(Constants.VULNERABLE_CODE_EXECUTION_MAP, AnalyzerProperties.getExecutionPathsOutputDir());
+        writeCodeExecutionPaths(Constants.REACHABLE_VULNERABLE_CODE_EXECUTION_MAP, AnalyzerProperties.getReachablePathsOutputDir());
+        Utilities.stopCodeExecutionTimer();
         System.out.println("breakpoint");
-        //        Constants.methodInterfaceMap.forEach((method, interfaces) -> {
-//            System.out.println("Class Method: " + method);
-//            interfaces.forEach(iface -> System.out.println("  Overrides Interface Method: " + iface));
-//        });
+    }
+
+    public static void analyzeJarFiles() {
+        analyzeJarFile(AnalyzerProperties.getServiceJar());
+
+        switch (Constants.ANALYSIS_TYPE) {
+            case MAIN:
+                analyzeJarFile(AnalyzerProperties.getCrtDependenciesJar());
+                break;
+            case TEST:
+                analyzeJarFile(AnalyzerProperties.getCrtTestDependenciesJar());
+                break;
+            case CLASSPATH:
+                analyzeJarFile(AnalyzerProperties.getCrtClasspathDependenciesJar());
+                break;
+            case ALL:
+                analyzeJarFile(AnalyzerProperties.getCrtDependenciesJar());
+                analyzeJarFile(AnalyzerProperties.getCrtTestDependenciesJar());
+                analyzeJarFile(AnalyzerProperties.getCrtClasspathDependenciesJar());
+                break;
+        }
     }
 
     /**
@@ -41,7 +51,7 @@ public class CodeReachabilityAnalyzer {
      * @param jarFilePath
      * @throws IOException
      */
-    public static void analyzeJarFile(String jarFilePath) throws IOException {
+    public static void analyzeJarFile(String jarFilePath) {
         try (JarFile jarFile = new JarFile(jarFilePath)) {
             Enumeration<JarEntry> entries = jarFile.entries();
             while (entries.hasMoreElements()) {
@@ -49,10 +59,12 @@ public class CodeReachabilityAnalyzer {
                 if (entry.getName().endsWith(".class")) {
                     try (InputStream inputStream = jarFile.getInputStream(entry)) {
                         byte[] classBytes = readAllBytes(inputStream);
-                        Constants.classBytesMap.put(entry.getName().replace(".class", ""), classBytes);
+                        Constants.CLASS_BYTES_MAP.put(entry.getName().replace(".class", ""), classBytes);
                     }
                 }
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -60,7 +72,7 @@ public class CodeReachabilityAnalyzer {
      *
      */
     public static void analyzeClasses() {
-        for (Map.Entry<String, byte[]> entry : Constants.classBytesMap.entrySet()) {
+        for (Map.Entry<String, byte[]> entry : Constants.CLASS_BYTES_MAP.entrySet()) {
             ClassReader classReader = new ClassReader(entry.getValue());
             ClassNode classNode = new ClassNode();
             classReader.accept(classNode, 0);
@@ -79,10 +91,10 @@ public class CodeReachabilityAnalyzer {
                 if (classNode.interfaces != null) {
                     List<String> interfaces = getOverriddenInterfaceMethods(classNode, methodNode);
                     if (!interfaces.isEmpty()) {
-                        Constants.methodInterfaceMap.put(classNode.name + "." + methodNode.name + methodNode.desc, interfaces);
+                        Constants.METHOD_INTERFACE_MAP.put(classNode.name + "." + methodNode.name + methodNode.desc, interfaces);
                     }
                 }
-                Constants.callGraph.put(methodName, calledMethods);
+                Constants.CALL_GRAPH.put(methodName, calledMethods);
             }
         }
     }
@@ -113,7 +125,7 @@ public class CodeReachabilityAnalyzer {
     private static List<String> getOverriddenInterfaceMethods(ClassNode classNode, MethodNode methodNode) {
         List<String> overriddenInterfaceMethods = new ArrayList<>();
         for (String interfaceName : classNode.interfaces) {
-            byte[] interfaceBytes = Constants.classBytesMap.get(interfaceName);
+            byte[] interfaceBytes = Constants.CLASS_BYTES_MAP.get(interfaceName);
             if (interfaceBytes != null) {
                 try {
                     ClassReader interfaceReader = new ClassReader(interfaceBytes);
@@ -140,7 +152,7 @@ public class CodeReachabilityAnalyzer {
      * class/methods are used for evaluation in place of the user inputted class/methods.
      */
     protected static void modifyVulnerableCodeSources() {
-        for (Map.Entry<String, List<String>> targetMapEntry : Constants.modifiedTargetCodeMap.entrySet()) {
+        for (Map.Entry<String, List<String>> targetMapEntry : Constants.MODIFIED_TARGET_CODE_MAP.entrySet()) {
             List<String> updatedCodeTargets = new ArrayList<>();
             String vulnerabilityId = targetMapEntry.getKey();
             List<String> codeTargets = targetMapEntry.getValue();
@@ -157,37 +169,16 @@ public class CodeReachabilityAnalyzer {
                 }
                 updatedCodeTargets.addAll(newCodeTargets);
             }
-            if (Constants.modifiedTargetCodeMap.containsKey(vulnerabilityId)) {
-                List<String> values = Constants.modifiedTargetCodeMap.getOrDefault(vulnerabilityId, new ArrayList<>());
+            if (Constants.MODIFIED_TARGET_CODE_MAP.containsKey(vulnerabilityId)) {
+                List<String> values = Constants.MODIFIED_TARGET_CODE_MAP.getOrDefault(vulnerabilityId, new ArrayList<>());
                 values.addAll(updatedCodeTargets);
-                Constants.modifiedTargetCodeMap.put(vulnerabilityId, values);
+                Constants.MODIFIED_TARGET_CODE_MAP.put(vulnerabilityId, values);
             }
             else {
-                Constants.modifiedTargetCodeMap.put(vulnerabilityId, updatedCodeTargets);
+                Constants.MODIFIED_TARGET_CODE_MAP.put(vulnerabilityId, updatedCodeTargets);
             }
         }
     }
-
-//    public static Set<String> findCommonValues() {
-//        Map<String, Integer> occurrenceMap = new HashMap<>();
-//
-//        // Count occurrences of each string
-//        for (Map.Entry<String, List<String>> entry : Constants.modifiedTargetCodeMap.entrySet()) {
-//            for (String value : entry.getValue()) {
-//                occurrenceMap.put(value, occurrenceMap.getOrDefault(value, 0) + 1);
-//            }
-//        }
-//
-//        // Find strings that occur in more than one key
-//        Set<String> commonValues = new HashSet<>();
-//        for (Map.Entry<String, Integer> entry : occurrenceMap.entrySet()) {
-//            if (entry.getValue() > 1) {
-//                commonValues.add(entry.getKey());
-//            }
-//        }
-//
-//        return commonValues;
-//    }
 
     /**
      * Searches allMethods data structure for class/methods that match
@@ -197,7 +188,7 @@ public class CodeReachabilityAnalyzer {
      * @return Matching class/methods
      */
     public static List<String> findMethodsByClassAndName(String className, String methodName) {
-        return Constants.callGraph.keySet().stream().filter(method -> method.startsWith(className + ".") &&
+        return Constants.CALL_GRAPH.keySet().stream().filter(method -> method.startsWith(className + ".") &&
                 (methodName == null || methodName.isEmpty() ||
                         method.contains("." + methodName + "("))).collect(Collectors.toList());
     }
@@ -207,23 +198,20 @@ public class CodeReachabilityAnalyzer {
      * that match the user inputted class/methods
      */
     protected static void getVulnerableCodeExecutionPaths() {
-        for (Map.Entry<String, List<String>> codeTargetMapEntry : Constants.modifiedTargetCodeMap.entrySet()) {
+        for (Map.Entry<String, List<String>> codeTargetMapEntry : Constants.MODIFIED_TARGET_CODE_MAP.entrySet()) {
             Map<String, List<List<String>>> vulnerableCodeExecutionPathsMap = new HashMap<>();
             String vulnerabilityId = codeTargetMapEntry.getKey();
             List<String> codeTargets = codeTargetMapEntry.getValue();
             for (String codeTarget : codeTargets) {
-                System.out.println("Getting execution paths for: " + codeTarget);
-                long startTime = System.nanoTime();
+                Utilities.startCodeExecutionTimer("Getting execution paths for: " + codeTarget);
                 //TreeNode<String> vulnerableCode = TreeUtil.createVulnerableCodeExecutionTree(codeTarget);
-                TreeNode<String> vulnerableCode = ParallelTreeUtil.createVulnerableCodeExecutionTree(codeTarget);
-                long endTime = System.nanoTime();
-                long duration = endTime - startTime;
-                System.out.println("Execution time in milliseconds: " + (duration / 1_000_000));
-                List<List<String>> vulnerableCodeExecutionPaths = TreeUtil.retrieveVulnerableCodeExecutionPathsFromTree(vulnerableCode);
+                TreeNode<String> vulnerableCode = ParallelTreeCreator.createVulnerableCodeExecutionTree(codeTarget);
+                Utilities.stopCodeExecutionTimer();
+                List<List<String>> vulnerableCodeExecutionPaths = Utilities.retrieveVulnerableCodeExecutionPathsFromTree(vulnerableCode);
                 getReachableVulnerableCodeExecutionPaths(vulnerableCodeExecutionPaths, codeTarget, vulnerabilityId);
                 vulnerableCodeExecutionPathsMap.put(codeTarget, vulnerableCodeExecutionPaths);
             }
-            Constants.vulnerableCodeExecutionMap.put(vulnerabilityId, vulnerableCodeExecutionPathsMap);
+            Constants.VULNERABLE_CODE_EXECUTION_MAP.put(vulnerabilityId, vulnerableCodeExecutionPathsMap);
         }
     }
 
@@ -241,7 +229,7 @@ public class CodeReachabilityAnalyzer {
         boolean isReachable = false;
         for (List<String> vulnerableCodeExecutionPath : vulnerableCodeExecutionPaths) {
             for (String path : vulnerableCodeExecutionPath) {
-                if (path.contains(Constants.APPLICATION_GROUP)) {
+                if (path.contains(AnalyzerProperties.getApplicationGroup())) {
                     // This copy needs to happen so that the list reversal that happens later doesn't affect both lists
                     List<String> vulnerableCodeExecutionPathCopy = new ArrayList<>(vulnerableCodeExecutionPath);
                     reachableVulnerableCodePaths.add(vulnerableCodeExecutionPathCopy);
@@ -252,7 +240,7 @@ public class CodeReachabilityAnalyzer {
             reachableVulnerableCodeExecutionPathsMap.put(vulnerableCode, reachableVulnerableCodePaths);
         }
         if (isReachable) {
-            Constants.reachableVulnerableCodeExecutionMap.put(vulnerabilityId, reachableVulnerableCodeExecutionPathsMap);
+            Constants.REACHABLE_VULNERABLE_CODE_EXECUTION_MAP.put(vulnerabilityId, reachableVulnerableCodeExecutionPathsMap);
         }
     }
 
@@ -262,7 +250,8 @@ public class CodeReachabilityAnalyzer {
      * @param filePath Directory of the generated text file
      */
     protected static void writeCodeExecutionPaths(Map<String, Map<String, List<List<String>>>> codeExecutionMap, String filePath) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+        String fileName = Utilities.createFileName(filePath);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             for (Map.Entry<String, Map<String, List<List<String>>>> codeExecutionMapping : codeExecutionMap.entrySet()) {
                 String vulnerabilityId = codeExecutionMapping.getKey();
                 writer.write("Vulnerability ID: " + vulnerabilityId + "\n");

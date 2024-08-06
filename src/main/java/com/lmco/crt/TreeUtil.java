@@ -63,7 +63,7 @@ public class TreeUtil {
 
         TreeNode<String> vulnerableCode = null;
         boolean isInterfaceMapping = false;
-        for (Map.Entry<String, List<String>> entry : Constants.methodInterfaceMap.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : Constants.METHOD_INTERFACE_MAP.entrySet()) {
             String key = entry.getKey();
             List<String> values = entry.getValue();
             if (values.contains(codeTarget)) {
@@ -76,7 +76,7 @@ public class TreeUtil {
             else if (key.equals(codeTarget)) {
                 if (!values.isEmpty()) {
                     vulnerableCode = new TreeNode<>(codeTarget, false);
-                    for (String interfaceName : Constants.methodInterfaceMap.get(codeTarget)) {
+                    for (String interfaceName : Constants.METHOD_INTERFACE_MAP.get(codeTarget)) {
                         TreeNode<String> child = vulnerableCode.addChild(interfaceName, true);
                         createVulnerableCodeExecutionTreeRecursive(child, 0, true);
                         isInterfaceMapping = true;
@@ -123,15 +123,15 @@ public class TreeUtil {
             return;
         }
 
-        for (Map.Entry<String, Set<String>> entry : Constants.callGraph.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : Constants.CALL_GRAPH.entrySet()) {
             String callingCode = entry.getKey();
             if (entry.getValue().contains(vulnerableCode.data)) {
                 // Get the interface for a method
-                if (Constants.methodInterfaceMap.containsKey(callingCode)) {
-                    if (Constants.methodInterfaceMap.get(callingCode).size() > 1) {
+                if (Constants.METHOD_INTERFACE_MAP.containsKey(callingCode)) {
+                    if (Constants.METHOD_INTERFACE_MAP.get(callingCode).size() > 1) {
                         System.out.println("Method has multiple interfaces");
                     }
-                    for (String interfaceName : Constants.methodInterfaceMap.get(callingCode)) {
+                    for (String interfaceName : Constants.METHOD_INTERFACE_MAP.get(callingCode)) {
                         TreeNode<String> child = vulnerableCode.addChild(interfaceName, true);
                         createVulnerableCodeExecutionTreeRecursive(child, depth + 1, true);
                     }
