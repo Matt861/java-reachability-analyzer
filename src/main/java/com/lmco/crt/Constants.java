@@ -15,9 +15,8 @@ public final class Constants {
     public static final Map<String, byte[]> CLASS_BYTES_MAP = new HashMap<>();
     public static final Map<String, List<String>> METHOD_INTERFACE_MAP = new HashMap<>();
     public static final Map<String, Set<String>> CALL_GRAPH = new HashMap<>();
+    public static final ANALYSIS_ENUM ANALYSIS_TYPE = ANALYSIS_ENUM.valueOf(AnalyzerProperties.getAnalysisType().toUpperCase());
     public enum ANALYSIS_ENUM {
         MAIN, TEST, CLASSPATH, ALL;
     }
-
-    public static final ANALYSIS_ENUM ANALYSIS_TYPE = ANALYSIS_ENUM.valueOf(AnalyzerProperties.getAnalysisType().toUpperCase());
 }

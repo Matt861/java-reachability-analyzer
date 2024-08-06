@@ -33,13 +33,16 @@ dependencies {
     implementation 'org.ow2.asm:asm:7.2'
     implementation 'org.ow2.asm:asm-tree:7.2'
     implementation 'org.apache.commons:commons-compress:1.19'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.2.7.RELEASE'
     //testImplementation 'com.lmco.crt:crt-test-dependencies:0.4.0'
 //    testImplementation platform('org.junit:junit-bom:5.9.1')
 //    testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 test {
-    useJUnit()
+    useJUnitPlatform()
+    maxHeapSize = "2g" // Set this to the desired heap size
+    jvmArgs "-Xmx2g" // You can adjust the size according to your needs
 }
 
 // Load properties from gradle.properties

@@ -74,6 +74,13 @@ public class AnalyzerProperties {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
 
+    public static void setAnalysisType(String analysisType) {
+        AnalyzerProperties.analysisType = analysisType;
+    }
+
+    public static void setCsvFileName(String csvFileName) {
+        AnalyzerProperties.csvFileName = csvFileName;
     }
 }

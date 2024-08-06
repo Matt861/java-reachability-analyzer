@@ -1,46 +1,241 @@
 package com.lmco.crt;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
+import java.io.File;
+import java.time.Duration;
 
 public class ReachabilityTest {
 
-//    @Test
-//    public void test1() throws IOException {
-//        File serviceJarFile = new File(Constants.SERVICE_JAR_PATH);
-//        File dependenciesJar = new File(Constants.CRT_DEPENDENCIES_JAR_PATH);
-//        File tempJarFile = Files.createTempFile("test", ".jar").toFile();
-//        try (FileOutputStream out = new FileOutputStream(tempJarFile)) {
-//            Files.copy(dependenciesJar.toPath(), out);
-//        }
-//        //MethodReachabilityAnalyzer3 analyzer = new MethodReachabilityAnalyzer3();
-//        //CodeReachabilityAnalyzer3.analyzeJar(serviceJar, true);
-//        CodeReachabilityAnalyzer3.analyzeJar(tempJarFile);
-//        System.out.println("breakpoint");
-//    }
+    @BeforeEach
+    void setUp() {
+        AnalyzerProperties.loadProperties();
+    }
+
+    void setProperties(String analysisType) {
+        AnalyzerProperties.setAnalysisType(analysisType);
+        AnalyzerProperties.setCsvFileName(Utilities.getCsvFile(AnalyzerProperties.getAnalysisType()));
+    }
 
     @Test
-    public void test2() throws IOException {
-        Map<String, Set<String>> callGraph = Constants.CALL_GRAPH;
-        try (GZIPInputStream gzipInputStream = new GZIPInputStream(Files.newInputStream(Paths.get("input\\CallGraph.csv.gz")));
-             BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", 2);
-                if (parts.length == 2) {
-                    String key = parts[0];
-                    String value = parts[1];
-                    Constants.CALL_GRAPH.computeIfAbsent(key, k -> new HashSet<>()).add(value);
-                }
-            }
-        }
-        System.out.println("breakpoint");
+    void analyzeTestJarFilesTest() {
+        setProperties("TEST");
+        CodeReachabilityAnalyzer.analyzeJarFiles();
+        Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
     }
+
+    @Test
+    void analyzeClasspathJarFilesTest() {
+        setProperties("CLASSPATH");
+        CodeReachabilityAnalyzer.analyzeJarFiles();
+        Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+    }
+
+    @Test
+    void analyzeMainJarFilesTest() {
+        setProperties("MAIN");
+        CodeReachabilityAnalyzer.analyzeJarFiles();
+        Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+    }
+
+    @Test
+    void analyzeTestJarFileClassesTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(20), () -> {
+            setProperties("TEST");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeClasspathJarFileClassesTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(20), () -> {
+            setProperties("CLASSPATH");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeMainJarFileClassesTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(40), () -> {
+            setProperties("MAIN");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeTestModifyCodeSourcesTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(25), () -> {
+            setProperties("TEST");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeClasspathModifyCodeSourcesTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(25), () -> {
+            setProperties("CLASSPATH");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeMainModifyCodeSourcesTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(40), () -> {
+            setProperties("MAIN");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeTestGetExecutionPathsTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(600), () -> {
+            setProperties("TEST");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.getVulnerableCodeExecutionPaths();
+            Assertions.assertFalse(Constants.VULNERABLE_CODE_EXECUTION_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeClasspathGetExecutionPathsTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(600), () -> {
+            setProperties("CLASSPATH");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.getVulnerableCodeExecutionPaths();
+            Assertions.assertFalse(Constants.VULNERABLE_CODE_EXECUTION_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeMainGetExecutionPathsTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(900), () -> {
+            setProperties("MAIN");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.getVulnerableCodeExecutionPaths();
+            Assertions.assertFalse(Constants.VULNERABLE_CODE_EXECUTION_MAP.isEmpty());
+        });
+    }
+
+    @Test
+    void analyzeTestWriteExecutionPathsTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(600), () -> {
+            setProperties("TEST");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.getVulnerableCodeExecutionPaths();
+            Assertions.assertFalse(Constants.VULNERABLE_CODE_EXECUTION_MAP.isEmpty());
+            CodeReachabilityAnalyzer.writeCodeExecutionPaths(Constants.VULNERABLE_CODE_EXECUTION_MAP, AnalyzerProperties.getExecutionPathsOutputDir());
+            String executionPathsFileName = Utilities.createFileName(AnalyzerProperties.getExecutionPathsOutputDir());
+            File executionPathsFile = new File(executionPathsFileName);
+            Assertions.assertTrue(executionPathsFile.exists());
+            CodeReachabilityAnalyzer.writeCodeExecutionPaths(Constants.REACHABLE_VULNERABLE_CODE_EXECUTION_MAP, AnalyzerProperties.getReachablePathsOutputDir());
+            String reachablePathsFileName = Utilities.createFileName(AnalyzerProperties.getReachablePathsOutputDir());
+            File reachablePathsFile = new File(reachablePathsFileName);
+            Assertions.assertTrue(reachablePathsFile.exists());
+        });
+    }
+
+    @Test
+    void analyzeClasspathWriteExecutionPathsTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(600), () -> {
+            setProperties("CLASSPATH");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.getVulnerableCodeExecutionPaths();
+            Assertions.assertFalse(Constants.VULNERABLE_CODE_EXECUTION_MAP.isEmpty());
+            CodeReachabilityAnalyzer.writeCodeExecutionPaths(Constants.VULNERABLE_CODE_EXECUTION_MAP, AnalyzerProperties.getExecutionPathsOutputDir());
+            String executionPathsFileName = Utilities.createFileName(AnalyzerProperties.getExecutionPathsOutputDir());
+            File executionPathsFile = new File(executionPathsFileName);
+            Assertions.assertTrue(executionPathsFile.exists());
+            CodeReachabilityAnalyzer.writeCodeExecutionPaths(Constants.REACHABLE_VULNERABLE_CODE_EXECUTION_MAP, AnalyzerProperties.getReachablePathsOutputDir());
+            String reachablePathsFileName = Utilities.createFileName(AnalyzerProperties.getReachablePathsOutputDir());
+            File reachablePathsFile = new File(reachablePathsFileName);
+            Assertions.assertTrue(reachablePathsFile.exists());
+        });
+    }
+
+    @Test
+    void analyzeMainWriteExecutionPathsTest() {
+        Assertions.assertTimeout(Duration.ofSeconds(900), () -> {
+            setProperties("MAIN");
+            CodeReachabilityAnalyzer.analyzeJarFiles();
+            Assertions.assertFalse(Constants.CLASS_BYTES_MAP.isEmpty());
+            CodeReachabilityAnalyzer.analyzeClasses();
+            Assertions.assertFalse(Constants.CALL_GRAPH.isEmpty());
+            Assertions.assertFalse(Constants.METHOD_INTERFACE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.modifyVulnerableCodeSources();
+            Assertions.assertFalse(Constants.MODIFIED_TARGET_CODE_MAP.isEmpty());
+            CodeReachabilityAnalyzer.getVulnerableCodeExecutionPaths();
+            Assertions.assertFalse(Constants.VULNERABLE_CODE_EXECUTION_MAP.isEmpty());
+            CodeReachabilityAnalyzer.writeCodeExecutionPaths(Constants.VULNERABLE_CODE_EXECUTION_MAP, AnalyzerProperties.getExecutionPathsOutputDir());
+            String executionPathsFileName = Utilities.createFileName(AnalyzerProperties.getExecutionPathsOutputDir());
+            File executionPathsFile = new File(executionPathsFileName);
+            Assertions.assertTrue(executionPathsFile.exists());
+            CodeReachabilityAnalyzer.writeCodeExecutionPaths(Constants.REACHABLE_VULNERABLE_CODE_EXECUTION_MAP, AnalyzerProperties.getReachablePathsOutputDir());
+            String reachablePathsFileName = Utilities.createFileName(AnalyzerProperties.getReachablePathsOutputDir());
+            File reachablePathsFile = new File(reachablePathsFileName);
+            Assertions.assertTrue(reachablePathsFile.exists());
+        });
+    }
+
 }
