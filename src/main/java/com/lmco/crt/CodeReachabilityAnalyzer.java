@@ -20,9 +20,15 @@ public class CodeReachabilityAnalyzer {
         //Map<String, List<String>> methodInterfaceMap = Constants.methodInterfaceMap;
         //Map<String, Set<String>> callGraph = Constants.callGraph;
         modifyVulnerableCodeSources();
+        //findCommonValues();
         getVulnerableCodeExecutionPaths();
+        long startTime = System.nanoTime();
+        System.out.println("Writing execution paths");
         writeCodeExecutionPaths(Constants.vulnerableCodeExecutionMap, Constants.EXECUTION_PATHS_OUTPUT_DIR);
         writeCodeExecutionPaths(Constants.reachableVulnerableCodeExecutionMap, Constants.REACHABLE_PATHS_OUTPUT_DIR);
+        long endTime = System.nanoTime();
+        long duration = endTime - startTime;
+        System.out.println("Execution time in milliseconds: " + (duration / 1_000_000));
         System.out.println("breakpoint");
         //        Constants.methodInterfaceMap.forEach((method, interfaces) -> {
 //            System.out.println("Class Method: " + method);
@@ -151,9 +157,37 @@ public class CodeReachabilityAnalyzer {
                 }
                 updatedCodeTargets.addAll(newCodeTargets);
             }
-            Constants.modifiedTargetCodeMap.put(vulnerabilityId, updatedCodeTargets);
+            if (Constants.modifiedTargetCodeMap.containsKey(vulnerabilityId)) {
+                List<String> values = Constants.modifiedTargetCodeMap.getOrDefault(vulnerabilityId, new ArrayList<>());
+                values.addAll(updatedCodeTargets);
+                Constants.modifiedTargetCodeMap.put(vulnerabilityId, values);
+            }
+            else {
+                Constants.modifiedTargetCodeMap.put(vulnerabilityId, updatedCodeTargets);
+            }
         }
     }
+
+//    public static Set<String> findCommonValues() {
+//        Map<String, Integer> occurrenceMap = new HashMap<>();
+//
+//        // Count occurrences of each string
+//        for (Map.Entry<String, List<String>> entry : Constants.modifiedTargetCodeMap.entrySet()) {
+//            for (String value : entry.getValue()) {
+//                occurrenceMap.put(value, occurrenceMap.getOrDefault(value, 0) + 1);
+//            }
+//        }
+//
+//        // Find strings that occur in more than one key
+//        Set<String> commonValues = new HashSet<>();
+//        for (Map.Entry<String, Integer> entry : occurrenceMap.entrySet()) {
+//            if (entry.getValue() > 1) {
+//                commonValues.add(entry.getKey());
+//            }
+//        }
+//
+//        return commonValues;
+//    }
 
     /**
      * Searches allMethods data structure for class/methods that match
@@ -180,7 +214,8 @@ public class CodeReachabilityAnalyzer {
             for (String codeTarget : codeTargets) {
                 System.out.println("Getting execution paths for: " + codeTarget);
                 long startTime = System.nanoTime();
-                TreeNode<String> vulnerableCode = TreeUtil.createVulnerableCodeExecutionTree(codeTarget);
+                //TreeNode<String> vulnerableCode = TreeUtil.createVulnerableCodeExecutionTree(codeTarget);
+                TreeNode<String> vulnerableCode = ParallelTreeUtil.createVulnerableCodeExecutionTree(codeTarget);
                 long endTime = System.nanoTime();
                 long duration = endTime - startTime;
                 System.out.println("Execution time in milliseconds: " + (duration / 1_000_000));

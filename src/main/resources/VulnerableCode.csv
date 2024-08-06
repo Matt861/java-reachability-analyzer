@@ -1,5 +1,2 @@
 Vulnerability ID, Vulnerable Class, Vulnerable Method
-CVE-XXX-XXX1, org/springframework/context/support/PostProcessorRegistrationDelegate, invokeBeanDefinitionRegistryPostProcessors
-CVE-XXX-XXX2, org/springframework/beans/factory/support/BeanDefinitionRegistryPostProcessor, postProcessBeanDefinitionRegistry
-CVE-XXX-XXX3, org/springframework/context/annotation/ConfigurationClassPostProcessor, processConfigBeanDefinitions
-CVE-XXX-XXX4, org/springframework/context/annotation/ConfigurationClassPostProcessor, postProcessBeanDefinitionRegistry
+CVE-2022-40152,org/apache/commons/compress/archivers/zip/ZipArchiveInputStream,pushback([BII)V

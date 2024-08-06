@@ -72,7 +72,7 @@ public class TreeUtil {
                 isInterfaceMapping = true;
                 break;
             }
-            // Condition to check if tree starts with a method overrided by an interface
+            // Condition to check if tree starts with a method overridden by an interface
             else if (key.equals(codeTarget)) {
                 if (!values.isEmpty()) {
                     vulnerableCode = new TreeNode<>(codeTarget, false);
@@ -80,8 +80,8 @@ public class TreeUtil {
                         TreeNode<String> child = vulnerableCode.addChild(interfaceName, true);
                         createVulnerableCodeExecutionTreeRecursive(child, 0, true);
                         isInterfaceMapping = true;
-                        break;
                     }
+                    break;
                 }
             }
         }
@@ -100,6 +100,10 @@ public class TreeUtil {
      * @param isInterface
      */
     public static void createVulnerableCodeExecutionTreeRecursive(TreeNode<String> vulnerableCode, int depth, Boolean isInterface) {
+
+        if (vulnerableCode.data.equals("org/apache/commons/compress/archivers/zip/ZipArchiveInputStream.bufferContainsSignature(Ljava/io/ByteArrayOutputStream;III)Z")) {
+            System.out.println("breakpoint");
+        }
 
         // Avoid infinite loops by checking visited nodes first
         if (visitedNodes.contains(vulnerableCode.data)) {
@@ -125,7 +129,7 @@ public class TreeUtil {
                 // Get the interface for a method
                 if (Constants.methodInterfaceMap.containsKey(callingCode)) {
                     if (Constants.methodInterfaceMap.get(callingCode).size() > 1) {
-                        System.out.println("breakpoint");
+                        System.out.println("Method has multiple interfaces");
                     }
                     for (String interfaceName : Constants.methodInterfaceMap.get(callingCode)) {
                         TreeNode<String> child = vulnerableCode.addChild(interfaceName, true);

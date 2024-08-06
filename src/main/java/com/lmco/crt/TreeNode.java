@@ -2,7 +2,7 @@ package com.lmco.crt;
 
 import java.util.*;
 
-public class TreeNode<T> implements Iterable<TreeNode<T>> {
+public class TreeNode<T> implements Cloneable, Iterable<TreeNode<T>> {
 
     T data;
     TreeNode<T> parent;
@@ -20,9 +20,10 @@ public class TreeNode<T> implements Iterable<TreeNode<T>> {
 
     private List<TreeNode<T>> elementsIndex;
 
+
     public TreeNode(T data, Boolean isInterface) {
         this.data = data;
-        this.children = new LinkedList<TreeNode<T>>();
+        this.children = new LinkedList<>();
         this.childDataSet = new HashSet<>();
         this.isInterfaceNode = isInterface;
     }
@@ -30,14 +31,20 @@ public class TreeNode<T> implements Iterable<TreeNode<T>> {
     public TreeNode<T> addChild(T child, Boolean isInterface) {
         TreeNode<T> childNode = new TreeNode<T>(child, isInterface);
         childNode.parent = this;
-        this.children.add(childNode);
+        synchronized (this) {
+            this.children.add(childNode);
+        }
         this.childDataSet.add(child);
         childNode.isInterfaceNode = isInterface;
+        //this.registerChildForSearch(childNode);
         return childNode;
     }
 
     public boolean containsChild(T childData) {
-        return this.childDataSet.contains(childData);
+        synchronized (this) {
+            return children.stream().anyMatch(child -> child.data.equals(data));
+        }
+        //return this.childDataSet.contains(childData);
     }
 
     public boolean contains(T childData) {
@@ -70,6 +77,36 @@ public class TreeNode<T> implements Iterable<TreeNode<T>> {
         }
 
         return null;
+    }
+
+    public TreeNode<T> findNodeByData(T data) {
+        if (this.data.equals(data)) {
+            return this;
+        }
+        for (TreeNode<T> child : children) {
+            TreeNode<T> result = child.findNodeByData(data);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public TreeNode<T> clone() throws CloneNotSupportedException {
+        try {
+            TreeNode<T> cloned = (TreeNode<T>) super.clone();
+            cloned.data = this.data;
+            cloned.children = new LinkedList<>();
+            for (TreeNode<T> child : this.children) {
+                cloned.children.add(child.clone());
+            }
+            cloned.childDataSet = new HashSet<>(this.childDataSet);
+            cloned.isInterfaceNode = this.isInterfaceNode;
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError(); // Can't happen
+        }
     }
 
     @Override
