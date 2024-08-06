@@ -17,6 +17,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src\main\resources\crt-maven-classpath-dependencies-vulnerable-code.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\src\main\resources\crt-maven-dependencies-vulnerable-code.csv">
           <value>
             <Attribute>

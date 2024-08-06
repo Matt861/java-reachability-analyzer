@@ -111,6 +111,19 @@ public class Utilities {
         startTime = 0;
     }
 
+    public static String getCsvFile(String analysisType) {
+        switch (analysisType) {
+            case "MAIN":
+                return AnalyzerProperties.getMainCsvFileName();
+            case "TEST":
+                return AnalyzerProperties.getTestCsvFileName();
+            case "CLASSPATH":
+                return AnalyzerProperties.getClasspathCsvFileName();
+            default:
+                return null;
+        }
+    }
+
     public static String createFileName(String filePath) {
         String[] parts = filePath.split("\\\\");
         String fileName = parts[parts.length - 1];

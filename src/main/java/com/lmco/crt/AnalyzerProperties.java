@@ -9,7 +9,9 @@ import java.util.Properties;
 public class AnalyzerProperties {
 
     private static String applicationGroup;
-    private static String csvFileName;
+    private static String mainCsvFileName;
+    private static String testCsvFileName;
+    private static String classpathCsvFileName;
     private static String executionPathsOutputDir;
     private static String reachablePathsOutputDir;
     private static String serviceJar;
@@ -18,12 +20,19 @@ public class AnalyzerProperties {
     private static String crtClasspathDependenciesJar;
     private static String analysisType;
     private static String serviceName;
+    private static String csvFileName;
 
     public static String getApplicationGroup() {
         return applicationGroup;
     }
-    public static String getCsvFileName() {
-        return csvFileName;
+    public static String getMainCsvFileName() {
+        return mainCsvFileName;
+    }
+    public static String getTestCsvFileName() {
+        return testCsvFileName;
+    }
+    public static String getClasspathCsvFileName() {
+        return classpathCsvFileName;
     }
     public static String getExecutionPathsOutputDir() {
         return executionPathsOutputDir;
@@ -43,13 +52,16 @@ public class AnalyzerProperties {
     }
     public static String getAnalysisType() { return analysisType; }
     public static String getServiceName() { return serviceName; }
+    public static String getCsvFileName() { return csvFileName; }
 
     public static void loadProperties() {
         Properties properties = new Properties();
         try (InputStream input = Files.newInputStream(Paths.get("src\\main\\resources\\config.properties"))) {
             properties.load(input);
             applicationGroup = properties.getProperty("application.group");
-            csvFileName = properties.getProperty("csv.file.name");
+            mainCsvFileName = properties.getProperty("main.csv.file.name");
+            testCsvFileName = properties.getProperty("test.csv.file.name");
+            classpathCsvFileName = properties.getProperty("classpath.csv.file.name");
             executionPathsOutputDir = properties.getProperty("execution.paths.output.dir");
             reachablePathsOutputDir = properties.getProperty("reachable.paths.output.dir");
             serviceJar = properties.getProperty("service.jar");
@@ -58,7 +70,7 @@ public class AnalyzerProperties {
             crtClasspathDependenciesJar = properties.getProperty("crt.classpath.dependencies.jar");
             analysisType = properties.getProperty("analysis.type");
             serviceName = properties.getProperty("service.name");
-
+            csvFileName = Utilities.getCsvFile(analysisType);
         } catch (IOException ex) {
             ex.printStackTrace();
         }

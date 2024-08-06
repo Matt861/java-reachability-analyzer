@@ -76,6 +76,10 @@ public class ParallelTreeCreator {
     private static class VulnerableCodeTreeTask extends RecursiveAction {
         private final TreeNode<String> vulnerableCode;
 
+        /**
+         *
+         * @param vulnerableCode
+         */
         public VulnerableCodeTreeTask(TreeNode<String> vulnerableCode) {
             this.vulnerableCode = vulnerableCode;
         }
